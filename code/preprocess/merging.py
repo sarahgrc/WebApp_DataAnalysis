@@ -9,7 +9,7 @@ def dataframe_concat(df,key,join="left"):
          key (list): name of the column to join the df
          left_join (bool, optional): _description_. Defaults to False.
          right_join (bool, optional): _description_. Defaults to False.
-         join (bool): left, right,  
+         join (string): left, right, outer, inner
 
      Raises:
          ValueError: _description_
