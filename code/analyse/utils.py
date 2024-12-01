@@ -110,6 +110,25 @@ def top_tags_most_commented(df, top_recipes=20, top_n=10):
     top_tags_commented = tags_series.value_counts().head(top_n)
     return top_tags_commented
 
+def top_contributors_by_recipes(df, top_n=10):
+    """
+    Identifies the top contributors based on the number of unique recipes they have published.
+
+    Args:
+        df (pd.DataFrame): DataFrame containing recipe data with at least the following columns:
+            - 'contributor_id': Unique identifier for contributors.
+            - 'recipe_id': Unique identifier for recipes.
+        top_n (int, optional): Number of top contributors to return. Defaults to 10.
+
+    Returns:
+        pd.Series: A series with the top `top_n` contributors as the index and the count of unique recipes 
+                   they have published as the values, sorted in descending order. Returns None if required 
+                   columns are missing.
+    """
+    if 'contributor_id' not in df or 'recipe_id' not in df:
+        return None
+    unique_recipes_df = df.drop_duplicates(subset='recipe_id')
+    return unique_recipes_df['contributor_id'].value_counts().head(top_n)
 
 def get_top_ingredients(merged_df, df_ingr_map, excluded_ingredients=None, top_n=10):
     """Finds the most frequently used ingredients, excluding common ones.
