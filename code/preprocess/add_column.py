@@ -1,3 +1,5 @@
+import pandas as pd
+
 def add_columns(df_target, df_source, key_target, key_source, columns_to_add):
     """
     add columbs from a datafram source to a target dataframe with keys
