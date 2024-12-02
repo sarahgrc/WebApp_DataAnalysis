@@ -1,10 +1,84 @@
 import streamlit as st 
 import pandas as pd 
+from code.analyse.utils import user_recipes 
 
 username = 47892
 
-def display_profile_page():
+# Source fonction my_metric : https://py.cafe/maartenbreddels/streamlit-custom-metrics
+def my_metric(label, value, bg_color, icon="fas fa-asterisk"): 
+    fontsize = 18
+    valign = "left"    
+    lnk = '<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.12.1/css/all.css" crossorigin="anonymous">'
+
+    bg_color_css = f'rgb({bg_color[0]}, {bg_color[1]}, {bg_color[2]}, 0.75)'
+
+    htmlstr = f"""<p style='background-color: {bg_color_css}; 
+                            font-size: {fontsize}px; 
+                            border-radius: 7px; 
+                            padding-left: 12px; 
+                            padding-top: 18px; 
+                            padding-bottom: 18px; 
+                            line-height:25px;'>
+                            <i class='{icon} fa-xs'></i> {value}
+                            </style><BR><b><span style='font-size: 15px; 
+                            margin-top: 0;'>{label}</b></style></span></p>"""
+
+    st.markdown(lnk + htmlstr, unsafe_allow_html=True)
+
+
+def display_profile_page(data_df):
     """
     Display the profile  page content.
     """
     st.title("Profile tracking : User " + str(username))
+
+    raw_interactions = pd.read_csv("C:/Users/ine28/OneDrive/Documents/Mastère_IA/Kit_Big _Data/archive/RAW_interactions.csv")
+    raw_recipes = pd.read_csv("C:/Users/ine28/OneDrive/Documents/Mastère_IA/Kit_Big _Data/archive/RAW_recipes.csv")
+    merged = user_recipes(username, data_df)
+
+    print("MERGED")
+    print(merged.head())
+    print(merged.info())
+
+    # Recettes publiées par user
+    user_recipes = merged.loc[merged["contributor_id"] == username]
+
+    """ unique_recipes_ids = user_recipes['name'].unique()
+    print("Recipes uniques :", unique_recipes_ids) """
+
+    print("USER RECIPES")
+    print(user_recipes.head())
+    print(user_recipes.info())
+
+    # Top 5 recettes commentées de l'user 
+    top_user_recipe = user_recipes['name'].value_counts().head(5) 
+    # Convertir la Série en DataFrame 
+    top_user_recipe_df = top_user_recipe.reset_index()
+    top_user_recipe_df.columns = ['Recipe', 'Number of comments']
+
+    # top_user_recipe.rename(columns={'value': 'Number'}, inplace = True)
+    
+    # Moyenne com par recette = Nb de com / Nb de recettes 
+    nb_com_mean = user_recipes['name'].value_counts().mean()  
+    rating_mean = user_recipes['rating'].mean()
+
+    # Display
+    blue = (51, 144, 255)
+    icon_com = "fas fa-solid fa-comment"
+    icon_rating = "fas fa-solid fa-star"
+
+    col1, col2 = st.columns(2)
+    with col1:
+        my_metric("Average comments by recipe", nb_com_mean, blue, icon_com)
+    with col2:
+        my_metric("Average rating", rating_mean, blue, icon_rating)
+
+    # st.metric(label="Average comments by recipe", value=nb_com_mean, delta=123, delta_color="off")
+    # st.metric(label="Average rating", value=rating_mean, delta=123, delta_color="off")
+    st.header("Your 5 most popular recipes : ")
+    st.table(top_user_recipe_df)
+
+
+
+    
+

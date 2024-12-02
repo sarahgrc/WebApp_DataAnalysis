@@ -180,3 +180,16 @@ def get_top_ingredients(merged_df, df_ingr_map, excluded_ingredients=None, top_n
     )
 
     return filtered_ingredient_counts
+
+def user_recipes(user_id, merged_df): 
+    """Finds recipes published by the user <username>
+
+    Args:
+        user_id : contributor id of the user
+        merged_df (pd.DataFrame): DataFrame with recipe data, including 'recipe_id' and 'ingredient_ids'.
+
+    Returns:
+        user_recipes (pd.DataFrame): DataFrame with the recipes published by the user
+    """
+    user_recipes = merged_df.loc[merged_df["contributor_id"] == user_id] 
+    return user_recipes 
