@@ -1,8 +1,8 @@
-from code.preprocess.cleaning_data import *
-from code.preprocess.merging import *
+from app_streamlit.preprocess.cleaning_data import *
+from app_streamlit.preprocess.merging import *
 from tests.conftest import sample_raw_recipes
-from code.preprocess.normalisation import *
-from code.preprocess.add_drop_column import *
+from app_streamlit.preprocess.normalisation import *
+from app_streamlit.preprocess.add_drop_column import *
 
 
 def test_date_separated(sample_raw_recipes):

@@ -1,4 +1,4 @@
-from code.analyse.utils import *
+from app_streamlit.analyse.utils import *
 
 def test_count_contributors_by_recipe_range_with_bins(sample_data):
     """Test the distribution of contributors based on the number of recipes contributed.
