@@ -1,4 +1,5 @@
-from code.analyse.utils import *
+from app_streamlit.analyse.utils import *
+
 
 def test_count_contributors_by_recipe_range_with_bins(sample_data):
     """Test the distribution of contributors based on the number of recipes contributed.
@@ -13,6 +14,7 @@ def test_count_contributors_by_recipe_range_with_bins(sample_data):
     result = count_contributors_by_recipe_range_with_bins(sample_data)
     assert result['1 recette'] == 3
     assert result['2 à 5 recettes'] == 3
+
 
 def test_top_contributors_by_recipes(sample_data):
     """Test retrieving the top contributors based on the number of recipes.
@@ -87,6 +89,7 @@ def test_get_top_ingredients(sample_data, ingredient_mapping):
         - The length of the result is 3 (top 3 ingredients).
         - The ingredient 'onion' is included in the result index.
     """
-    result = get_top_ingredients(sample_data, ingredient_mapping, excluded_ingredients={'salt'}, top_n=3)
+    result = get_top_ingredients(
+        sample_data, ingredient_mapping, excluded_ingredients={'salt'}, top_n=3)
     assert len(result) == 3
     assert 'onion' in result.index
