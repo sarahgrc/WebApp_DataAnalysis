@@ -8,7 +8,7 @@ def main_values(col_name,col_para_name,parameters,treshold,dataframe):
         col_name (string): name of the column with the values we want
         col_para_name (string): column on which we depend 
         parameters (list, string or int): name of the parameters (if multiple : must be for the same col_para_name)
-        treshold (int): max number of vlaues to return
+        treshold (int): max number of values to return
         dataframe : dataframe that is used 
 
     example : main_values('n_steps','minutes',[55,35],10,raw_recipes) returns the top 10 
@@ -40,3 +40,5 @@ def main_values(col_name,col_para_name,parameters,treshold,dataframe):
         top_values.append(val_counts.to_dict())
     
     return top_values
+
+

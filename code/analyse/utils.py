@@ -1,8 +1,8 @@
-"""Function used for statitics for the page UserFocus. 
+"""Function used for statistics. 
 """
 import ast
 import pandas as pd
-
+from classification_values import main_values
 
 def count_contributors_by_recipe_range_with_bins(df):
     """
@@ -80,7 +80,6 @@ def top_tags(df, top_n=20):
     # Compter les tags les plus fréquents
     top_tags_used = tags_series.value_counts().head(top_n)
     return top_tags_used
-
 
 
 def top_tags_most_commented(df, top_recipes=20, top_n=10):
@@ -180,3 +179,13 @@ def get_top_ingredients(merged_df, df_ingr_map, excluded_ingredients=None, top_n
     )
 
     return filtered_ingredient_counts
+
+def trendy_ingredients_by_seasons(df):
+    dico_season_months={'winter':['01','02','03'],'spring':['04','05','06'],'summer':['07','08','09'],'autumn':['11','12','13']}
+
+    dico_ingredients_seasons={}
+    for i in dico_season_months.keys():
+        if i == 'winter':
+            winter=main_values()
+            
+
