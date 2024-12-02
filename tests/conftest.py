@@ -1,10 +1,7 @@
 """
-Module de tests pour l'analyse de données.
-
-Ce fichier contient des tests unitaires et des fixtures utilisées avec pytest 
-pour tester les fonctionnalités d'analyse, de nettoyage et de manipulation 
-de données. Les tests couvrent plusieurs cas, comme le nettoyage des données, 
-la gestion des valeurs aberrantes, et la fusion de DataFrames.
+This file contains unit tests and fixtures used with pytest
+to test data analysis, cleaning, and manipulation features. The tests cover several cases, such as data cleaning,
+outlier handling, and merging DataFrames.
 """
 
 import pandas as pd
@@ -14,14 +11,14 @@ import pytest
 @pytest.fixture
 def sample_raw_recipes():
     """
-    Fixture qui charge un échantillon de données brutes de recettes.
+    Fixture that loads a sample of raw recipe data.
 
-    Ce DataFrame contient les colonnes nécessaires pour tester les 
-    transformations de données telles que la séparation de colonnes 
-    et l'ajout de nouvelles informations temporelles.
+    This DataFrame contains the columns needed to test
+    data transformations such as splitting columns
+    and adding new time information.
 
     Returns:
-        pd.DataFrame: Un DataFrame contenant les données brutes de recettes.
+    df (DataFrame): A DataFrame containing the raw recipe data.
     """
     df = pd.read_csv('sample/sample_raw_recipes.csv')
     return df
@@ -29,16 +26,15 @@ def sample_raw_recipes():
 @pytest.fixture
 def outliers_sample():
     """
-    Fixture qui génère un échantillon de données pour tester 
-    la gestion des valeurs aberrantes.
+    Fixture that generates a sample of data to test
+    outlier handling.
 
-    Le DataFrame généré contient deux colonnes numériques avec 
-    des valeurs incrémentales permettant de simuler différentes
-    plages de données.
+    The generated DataFrame contains two numeric columns with
+    incremental values to simulate different data ranges.
 
     Returns:
-        pd.DataFrame: Un DataFrame contenant deux colonnes `A` et `B` 
-        avec des valeurs incrémentales.
+    df (DataFrame): A DataFrame containing two columns 'A' and 'B'
+    with incremental values.
     """
     df = pd.DataFrame({'A': np.arange(0, 50, 3), 'B': np.arange(20, 70, 3)})
     return df
@@ -46,22 +42,20 @@ def outliers_sample():
 @pytest.fixture
 def merged_sample():
     """
-    Fixture qui génère deux DataFrames pour tester la fusion.
+    Fixture that generates two DataFrames to test the merge.
 
-    Ces DataFrames contiennent des colonnes communes et différentes, 
-    permettant de valider les opérations de jointure sous plusieurs 
-    configurations (`left`, `right`, `inner`, `outer`).
+    These DataFrames contain common and different columns,
+    allowing to validate join operations under several configurations ('left', 'right', 'inner', 'outer').
 
     Returns:
-        tuple: Deux DataFrames avec une colonne commune `A` et une colonne 
-        spécifique (`B` ou `C`).
+    tuple: Two DataFrames with a common column 'A' and a specific column
+    ('B' or 'C').
     """
     df1 = pd.DataFrame({'A': np.arange(0, 50, 3), 'B': np.arange(20, 70, 3)})
     df2 = pd.DataFrame({'A': np.arange(0, 50, 3), 'C': np.arange(100, 150, 3)})
     return df1, df2
 
 @pytest.fixture
-
 def sample_data():
     """
     Provides sample data for testing functions in the utilzs module.

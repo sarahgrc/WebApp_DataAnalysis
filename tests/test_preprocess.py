@@ -2,81 +2,79 @@ from code.preprocess.cleaning_data import *
 from code.preprocess.merging import *
 from tests.conftest import sample_raw_recipes
 from code.preprocess.normalisation import *
-from code.preprocess.add_column import *
+from code.preprocess.add_drop_column import *
 
 
 def test_date_separated(sample_raw_recipes):
     """
-    Teste la fonction `date_separated` sur un DataFrame d'échantillon.
+    Tests the 'date_separated' function on a sample DataFrame.
 
-    Vérifie que les colonnes spécifiques (`year`, `month`, `day`) sont 
-    correctement ajoutées au DataFrame d'entrée, sans supprimer de colonnes 
-    ou de lignes existantes.
+    Verifies that the specific columns ('year', 'month', 'day') are
+    correctly added to the input DataFrame, without removing any existing
+    columns or rows.
 
     Args:
-        sample_raw_recipes (pd.DataFrame): Un DataFrame contenant les données 
-        brutes, y compris une colonne `submitted` qui sera séparée en 
-        `year`, `month` et `day`.
+    sample_raw_recipes (pd.DataFrame): A DataFrame containing the raw
+    data, including a `submitted` column that will be separated into
+    'year', 'month', and 'day'.
     """
-    assert len(sample_raw_recipes.columns) == 13  # Vérifie le nombre initial de colonnes
+    assert len(sample_raw_recipes.columns) == 13  # Check th initial number of columns
     d = date_separated('submitted', sample_raw_recipes)
 
-    # Vérifie que les colonnes `year`, `month`, et `day` ont été ajoutées
+    # Checks that columns `year`, `month`, and `day` have been added 
     assert ('year' in d.columns)
     assert ('month' in d.columns)
     assert ('day' in d.columns)
 
-    # Vérifie qu'aucune ligne n'a été supprimée
+    # Checks no lines bhave been removed 
     assert len(d) == 200
 
-    # Vérifie qu'aucune colonne n'a été supprimée et que 3 nouvelles colonnes ont été ajoutées
+    #Checks no columns bhave been removed  and 3 columns have been added
     assert len(d.columns) == len(sample_raw_recipes.columns) + 3
 
 
 def test_outliers(outliers_sample):
     """
-    Teste la fonction `outliers` pour détecter et extraire les valeurs aberrantes 
-    dans un DataFrame d'échantillon.
+    Tests the 'outliers' function to detect and extract outliers
+    in a sample DataFrame.
 
-    Vérifie le bon fonctionnement de la détection des valeurs aberrantes au-dessus 
-    et en dessous des seuils donnés, ainsi que le retour des informations selon le 
-    mode demandé.
+    Verifies that outlier detection works above and below
+    the given thresholds, and that information is returned in the requested mode.
 
     Args:
-        outliers_sample (pd.DataFrame): Un DataFrame contenant des colonnes numériques 
-        utilisées pour tester la détection des valeurs aberrantes.
+    outliers_sample (DataFrame): A DataFrame containing numeric columns
+    used to test outlier detection.
     """
-    # Teste les valeurs supérieures à un seuil donné
+    # Tests values above a given treshold 
     outlier = outliers(outliers_sample, 'A', treshold_sup=30, treshold_inf=None, get_info=False)
-    assert isinstance(outlier, list)  # Vérifie que le résultat est une liste
-    assert len(outlier) == 6  # Vérifie le nombre de valeurs au-dessus du seuil
+    assert isinstance(outlier, list)  # Check result is a list
+    assert len(outlier) == 6  # Check the amount of values above the treshold 
 
-    # Teste les valeurs inférieures à un seuil donné
+    # Tests values below a given treshold 
     outlier1 = outliers(outliers_sample, 'A', treshold_sup=None, treshold_inf=10, get_info=False)
     assert isinstance(outlier1, list)
     assert len(outlier1) == 4
 
-    # Teste les valeurs dans une plage donnée avec retour des informations
+    # Tests values between two tresholds and returns info
     outlier2 = outliers(outliers_sample, 'A', treshold_sup=16, treshold_inf=37, get_info=True)
-    assert isinstance(outlier2, pd.DataFrame)  # Vérifie que le résultat est un DataFrame
-    assert len(outlier2) == 7  # Vérifie que les valeurs sont correctement filtrées
-
+    assert isinstance(outlier2, pd.DataFrame)  # Check result is a dataframe
+    assert len(outlier2) == 7  # check values are correctly filtered 
 
 def test_df_merged(merged_sample):
     """
-    Teste la fonction `dataframe_concat` pour la fusion de DataFrames.
+    Test the 'dataframe_concat' function for merging DataFrames.
 
-    Vérifie que chaque type de jointure (`left`, `right`, `outer`, `inner`) 
-    retourne un DataFrame avec la taille correcte.
+    Checks that each join type ('left', 'right', 'outer', 'inner')
+    returns a DataFrame with the correct size.
 
     Args:
-        merged_sample (tuple): Un tuple contenant deux DataFrames, partageant 
-        une colonne commune `A` et des colonnes spécifiques (`B` ou `C`), 
-        pour tester les différentes configurations de fusion.
+    merged_sample (tuple): A tuple containing two DataFrames, sharing
+    a common column `A` and specific columns ('B' or 'C'),
+    to test different merge configurations.
     """
     df = [merged_sample[0], merged_sample[1]]
 
-    # Vérifie que chaque type de jointure retourne le bon nombre de colonnes
+    # Check each fixture returns the correct number of columns
     type_join = ["left", "right", "outer", "inner"]
     for i in type_join:
         merging = dataframe_concat(df, 'A', join=i)

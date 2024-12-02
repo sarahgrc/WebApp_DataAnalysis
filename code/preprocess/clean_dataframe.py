@@ -7,7 +7,7 @@ def prepare_final_dataframe(raw_interaction, raw_recipes, pp_recipes):
 
     Args:
         raw_interaction (DataFrame): raw dataFrame of interactions from users 
-        raw_recipes (DataFrame): raw dataFrame with recipies informations 
+        raw_recipes (DataFrame): raw dataFrame with recipes informations 
         pp_recipes (DataFrame): recipies dataFrame preprocessed
 
     Returns:
@@ -39,10 +39,10 @@ def prepare_final_dataframe(raw_interaction, raw_recipes, pp_recipes):
 
     # Step 4 : Cleaning data by removing outliers 
     if 'n_steps' in df_merged.columns:
-        df_merged = df_merged[df_merged['n_steps'] <= 20]  # Kepp values <= 20
+        df_merged = df_merged[df_merged['n_steps'] <= 20]  # Keep values <= 20
 
     if 'minutes' in df_merged.columns:
-        df_merged = df_merged[df_merged['minutes'] <= 240]  # Kepp values <= 240
+        df_merged = df_merged[df_merged['minutes'] <= 240]  # Keep values <= 240
 
     # Step 5 : Remove columns "description" et "rating"
     columns_to_drop = ['description', 'rating']
