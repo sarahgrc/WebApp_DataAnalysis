@@ -4,6 +4,7 @@ import ast
 import pandas as pd
 from classification_values import main_values
 
+
 def count_contributors_by_recipe_range_with_bins(df):
     """
     Categorizes contributors based on the number of unique recipes they have contributed 
@@ -29,7 +30,8 @@ def count_contributors_by_recipe_range_with_bins(df):
 
     # Définir les plages de recettes (bins)
     bins = [0, 1, 5, 8, float('inf')]
-    labels = ['1 recette', '2 à 5 recettes', '6 à 8 recettes', 'Plus de 10 recettes']
+    labels = ['1 recette', '2 à 5 recettes',
+              '6 à 8 recettes', 'Plus de 10 recettes']
 
     # Découper en catégories
     binned_counts = pd.cut(recipe_counts, bins=bins, labels=labels, right=True)
@@ -38,7 +40,7 @@ def count_contributors_by_recipe_range_with_bins(df):
     contributor_counts_by_bin = binned_counts.value_counts().sort_index()
 
     return contributor_counts_by_bin
- 
+
 
 def top_contributors_by_commented_recipes(df, top_n=10):
     """
@@ -55,9 +57,11 @@ def top_contributors_by_commented_recipes(df, top_n=10):
     commented_recipes = df.dropna(subset=['review'])
 
     # Compter le nombre de commentaires par recette, puis par contributeur
-    comments_per_contributor = commented_recipes.groupby('contributor_id')['recipe_id'].count().sort_values(ascending=False).head(top_n)
+    comments_per_contributor = commented_recipes.groupby(
+        'contributor_id')['recipe_id'].count().sort_values(ascending=False).head(top_n)
 
     return comments_per_contributor
+
 
 def top_tags(df, top_n=20):
     """
@@ -99,7 +103,8 @@ def top_tags_most_commented(df, top_recipes=20, top_n=10):
     commented_recipes = df.dropna(subset=['review'])
 
     # Identifier les recettes les plus commentées
-    most_commented = commented_recipes['recipe_id'].value_counts().head(top_recipes).index
+    most_commented = commented_recipes['recipe_id'].value_counts().head(
+        top_recipes).index
 
     # Filtrer pour ces recettes
     filtered_df = df[df['recipe_id'].isin(most_commented)]
@@ -108,6 +113,7 @@ def top_tags_most_commented(df, top_recipes=20, top_n=10):
     tags_series = filtered_df['tags'].apply(eval).explode()
     top_tags_commented = tags_series.value_counts().head(top_n)
     return top_tags_commented
+
 
 def top_contributors_by_recipes(df, top_n=10):
     """
@@ -128,6 +134,7 @@ def top_contributors_by_recipes(df, top_n=10):
         return None
     unique_recipes_df = df.drop_duplicates(subset='recipe_id')
     return unique_recipes_df['contributor_id'].value_counts().head(top_n)
+
 
 def get_top_ingredients(merged_df, df_ingr_map, excluded_ingredients=None, top_n=10):
     """Finds the most frequently used ingredients, excluding common ones.
@@ -173,19 +180,50 @@ def get_top_ingredients(merged_df, df_ingr_map, excluded_ingredients=None, top_n
     filtered_ingredient_counts = (
         unique_recipes['mapped_ingredients']
         .explode()
-        .loc[lambda x: ~x.isin(excluded_ingredients)]  # Exclude common ingredients
+        # Exclude common ingredients
+        .loc[lambda x: ~x.isin(excluded_ingredients)]
         .value_counts()
         .head(top_n)
     )
 
     return filtered_ingredient_counts
 
-def trendy_ingredients_by_seasons(df):
-    dico_season_months={'winter':['01','02','03'],'spring':['04','05','06'],'summer':['07','08','09'],'autumn':['11','12','13']}
 
-    dico_ingredients_seasons={}
+def trendy_ingredients_by_seasons(df):
+    dico_season_months = {'winter': ['01', '02', '03'], 'spring': [
+        '04', '05', '06'], 'summer': ['07', '08', '09'], 'autumn': ['11', '12', '13']}
+
+    dico_ingredients_seasons = {}
     for i in dico_season_months.keys():
         if i == 'winter':
-            winter=main_values()
-            
+            winter = main_values()
 
+
+def add_season(df):
+    """ Add a season column to the dataframe """
+    def get_season(month):
+        if month in ('12', '01', '02'):
+            return 'winter'
+        elif month in ('03', '04', '05'):
+            return 'spring'
+        elif month in ('06', '07', '08'):
+            return 'summer'
+        elif month in ('09', '10', '11'):
+            return 'autumn'
+
+    df['season'] = df['month_date'].map(get_season)
+    return df
+
+
+def count_recipes_season(df):
+    """ Count recipes per season """
+    if 'season' not in list(df.columns):
+        df['season'] = add_season(df)
+
+    # count recipes per season
+    recipe_per_season = {'winter': len(df[df['season'] == 'winter']),
+                         'spring': len(df[df['season'] == 'spring']),
+                         'summer': len(df[df['season'] == 'summer']),
+                         'autumn': len(df[df['season'] == 'autumn'])}
+
+    return recipe_per_season
