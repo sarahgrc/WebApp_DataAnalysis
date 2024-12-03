@@ -4,7 +4,7 @@ from menu_page import display_menu_page
 from contributors_page import display_contributors_page
 from recipes_page import display_recipes_page 
 from profile_page import display_profile_page
-from preprocess.clean_dataframe import prepare_final_dataframe
+from load_data.preprocess.clean_dataframe import prepare_final_dataframe
 # Set the page configuration
 st.set_page_config(page_title="Data Manager", page_icon=":material/edit:")
 
