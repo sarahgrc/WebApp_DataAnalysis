@@ -2,7 +2,7 @@
 """
 import ast
 import pandas as pd
-from app_streamlit.analyse.classification_values import main_values
+from .classification_values import main_values
 
 def count_contributors_by_recipe_range_with_bins(df):
     """
@@ -167,7 +167,7 @@ def get_top_ingredients(merged_df, df_ingr_map, excluded_ingredients=None, top_n
         excluded_ingredients = {'black pepper', 'vegetable oil', 'salt', 'pepper', 'olive oil', 'oil',
                                 'butter', 'water', 'sugar', 'flour', 'brown sugar', 'salt and pepper',
                                 'scallion', 'baking powder', 'garlic', 'flmy', 'garlic clove',
-                                'all-purpose flmy', 'baking soda'}
+                                'all-purpose flmy', 'baking soda','ice cube'}
 
     # Filter/count occurrences of ingredients
     filtered_ingredient_counts = (
@@ -180,14 +180,85 @@ def get_top_ingredients(merged_df, df_ingr_map, excluded_ingredients=None, top_n
 
     return filtered_ingredient_counts
 
-"""
-def trendy_ingredients_by_seasons(df):
-    dico_season_months={'winter':['01','02','03'],'spring':['04','05','06'],'summer':['07','08','09'],'autumn':['11','12','13']}
 
-    dico_ingredients_seasons={}
+def trendy_ingredients_by_seasons(df,ingr_map):
+    """
+    This function create a dataframe for each seasons and returns the top 200 ingredients used
+
+    Args:
+        df (dataframe): dataframe cleaned 
+        ingr_map (dataFrame): dataFrame mapping ingredient IDs ('id') to their names ('replaced')
+
+    Returns:
+        winter_ingr,spring_ingr,summer_ingr,autumn_ingr (pd.series) : four pd.series with the top 200 ingredients used
+    """
+
+    # Dictionary mapping seasons to their corresponding months
+    dico_season_months={'winter':['01','02','03'],'spring':['04','05','06'],'summer':['07','08','09'],'autumn':['10','11','12']}
+
+    # Initialize empty dataFrames for each season
+    winter=pd.DataFrame()
+    spring=pd.DataFrame()
+    summer=pd.DataFrame()
+    autumn=pd.DataFrame()
+
+    # Iterate over each season in the dictionary and concatenate rows where the 'month_date' matches the season months
     for i in dico_season_months.keys():
         if i == 'winter':
-            winter=main_values()
-            
-"""
+            for e in dico_season_months[i]:
+                winter = pd.concat([winter, df[df['month_date'] == e]])
+        if i == 'spring':
+            for e in dico_season_months[i]:
+                spring = pd.concat([spring, df[df['month_date'] == e]])
+        if i == 'summer':
+            for e in dico_season_months[i]:
+                summer = pd.concat([summer, df[df['month_date'] == e]])
+        if i == 'autumn':
+            for e in dico_season_months[i]:
+                autumn = pd.concat([autumn, df[df['month_date'] == e]])
 
+    # Get the top 200 ingredients for each season
+    winter_ingr=get_top_ingredients(winter, ingr_map, excluded_ingredients=None, top_n=200)
+    spring_ingr=get_top_ingredients(spring, ingr_map, excluded_ingredients=None, top_n=200)
+    summer_ingr=get_top_ingredients(summer, ingr_map, excluded_ingredients=None, top_n=200)
+    autumn_ingr=get_top_ingredients(autumn, ingr_map, excluded_ingredients=None, top_n=200)
+
+    return winter_ingr,spring_ingr,summer_ingr,autumn_ingr
+
+def unique_ingr(winter_ingr,spring_ingr,summer_ingr,autumn_ingr):
+    """
+    This function return the unique ingredients used during each season by comparing all the ingredients used in
+    one season to all the other seasons. 
+
+    Args:
+        winter_ingr (pd.series): ingredients used during winter
+        spring_ingr (pd.series): ingredients used during spring
+        summer_ingr (pd.series): ingredients used during summer
+        autumn_ingr (pd.series): ingredients used during autumn
+
+    Returns:
+        winter_unique,spring_unique,summer_unique,autumn_unique (list): return a list for each season of unique ingredients 
+    """
+
+    # Initialize empty lists to store unique ingredient for each season
+    winter_unique=[]
+    spring_unique=[]
+    summer_unique=[]
+    autumn_unique=[]
+
+    # For each season, identify unique index 
+    for i in winter_ingr.index:
+        if i not in spring_ingr.index and i not in summer_ingr.index and i not in autumn_ingr.index : 
+            winter_unique.append(i)
+    for i in spring_ingr.index:
+        if i not in winter_ingr.index and i not in summer_ingr.index and i not in autumn_ingr.index : 
+            spring_unique.append(i)
+    for i in summer_ingr.index:
+        if i not in winter_ingr.index and i not in spring_ingr.index and i not in autumn_ingr.index : 
+            summer_unique.append(i)
+    for i in autumn_ingr.index:
+        if i not in winter_ingr.index and i not in summer_ingr.index and i not in spring_ingr.index : 
+            autumn_unique.append(i)
+
+    # Return unique indices for each season as a list
+    return winter_unique,spring_unique,summer_unique,autumn_unique
