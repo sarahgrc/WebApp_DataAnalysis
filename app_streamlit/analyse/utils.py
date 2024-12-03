@@ -29,7 +29,8 @@ def count_contributors_by_recipe_range_with_bins(df):
 
     # Définir les plages de recettes (bins)
     bins = [0, 1, 5, 8, float('inf')]
-    labels = ['1 recette', '2 à 5 recettes', '6 à 8 recettes', 'Plus de 10 recettes']
+    labels = ['1 recette', '2 à 5 recettes',
+              '6 à 8 recettes', 'Plus de 10 recettes']
 
     # Découper en catégories
     binned_counts = pd.cut(recipe_counts, bins=bins, labels=labels, right=True)
@@ -38,7 +39,7 @@ def count_contributors_by_recipe_range_with_bins(df):
     contributor_counts_by_bin = binned_counts.value_counts().sort_index()
 
     return contributor_counts_by_bin
- 
+
 
 def top_contributors_by_commented_recipes(df, top_n=10):
     """
@@ -55,9 +56,11 @@ def top_contributors_by_commented_recipes(df, top_n=10):
     commented_recipes = df.dropna(subset=['review'])
 
     # Compter le nombre de commentaires par recette, puis par contributeur
-    comments_per_contributor = commented_recipes.groupby('contributor_id')['recipe_id'].count().sort_values(ascending=False).head(top_n)
+    comments_per_contributor = commented_recipes.groupby(
+        'contributor_id')['recipe_id'].count().sort_values(ascending=False).head(top_n)
 
     return comments_per_contributor
+
 
 def top_tags(df, top_n=20):
     """
@@ -99,7 +102,8 @@ def top_tags_most_commented(df, top_recipes=20, top_n=10):
     commented_recipes = df.dropna(subset=['review'])
 
     # Identifier les recettes les plus commentées
-    most_commented = commented_recipes['recipe_id'].value_counts().head(top_recipes).index
+    most_commented = commented_recipes['recipe_id'].value_counts().head(
+        top_recipes).index
 
     # Filtrer pour ces recettes
     filtered_df = df[df['recipe_id'].isin(most_commented)]
@@ -108,6 +112,7 @@ def top_tags_most_commented(df, top_recipes=20, top_n=10):
     tags_series = filtered_df['tags'].apply(eval).explode()
     top_tags_commented = tags_series.value_counts().head(top_n)
     return top_tags_commented
+
 
 def top_contributors_by_recipes(df, top_n=10):
     """
@@ -128,6 +133,7 @@ def top_contributors_by_recipes(df, top_n=10):
         return None
     unique_recipes_df = df.drop_duplicates(subset='recipe_id')
     return unique_recipes_df['contributor_id'].value_counts().head(top_n)
+
 
 def get_top_ingredients(merged_df, df_ingr_map, excluded_ingredients=None, top_n=10):
     """Finds the most frequently used ingredients, excluding common ones.
@@ -167,27 +173,130 @@ def get_top_ingredients(merged_df, df_ingr_map, excluded_ingredients=None, top_n
         excluded_ingredients = {'black pepper', 'vegetable oil', 'salt', 'pepper', 'olive oil', 'oil',
                                 'butter', 'water', 'sugar', 'flour', 'brown sugar', 'salt and pepper',
                                 'scallion', 'baking powder', 'garlic', 'flmy', 'garlic clove',
-                                'all-purpose flmy', 'baking soda'}
+                                'all-purpose flmy', 'baking soda','ice cube'}
 
     # Filter/count occurrences of ingredients
     filtered_ingredient_counts = (
         unique_recipes['mapped_ingredients']
         .explode()
-        .loc[lambda x: ~x.isin(excluded_ingredients)]  # Exclude common ingredients
+        # Exclude common ingredients
+        .loc[lambda x: ~x.isin(excluded_ingredients)]
         .value_counts()
         .head(top_n)
     )
 
     return filtered_ingredient_counts
 
-def trendy_ingredients_by_seasons(df):
-    dico_season_months={'winter':['01','02','03'],'spring':['04','05','06'],'summer':['07','08','09'],'autumn':['11','12','13']}
+def trendy_ingredients_by_seasons(df,ingr_map):
+    """
+    This function create a dataframe for each seasons and returns the top 200 ingredients used
 
-    dico_ingredients_seasons={}
+    Args:
+        df (dataframe): dataframe cleaned 
+        ingr_map (dataFrame): dataFrame mapping ingredient IDs ('id') to their names ('replaced')
+
+    Returns:
+        winter_ingr,spring_ingr,summer_ingr,autumn_ingr (pd.series) : four pd.series with the top 200 ingredients used
+    """
+
+    # Dictionary mapping seasons to their corresponding months
+    dico_season_months={'winter':['01','02','03'],'spring':['04','05','06'],'summer':['07','08','09'],'autumn':['10','11','12']}
+
+    # Initialize empty dataFrames for each season
+    winter=pd.DataFrame()
+    spring=pd.DataFrame()
+    summer=pd.DataFrame()
+    autumn=pd.DataFrame()
+
+    # Iterate over each season in the dictionary and concatenate rows where the 'month_date' matches the season months
     for i in dico_season_months.keys():
         if i == 'winter':
-            winter=main_values()
-            
+            for e in dico_season_months[i]:
+                winter = pd.concat([winter, df[df['month_date'] == e]])
+        if i == 'spring':
+            for e in dico_season_months[i]:
+                spring = pd.concat([spring, df[df['month_date'] == e]])
+        if i == 'summer':
+            for e in dico_season_months[i]:
+                summer = pd.concat([summer, df[df['month_date'] == e]])
+        if i == 'autumn':
+            for e in dico_season_months[i]:
+                autumn = pd.concat([autumn, df[df['month_date'] == e]])
+
+    # Get the top 200 ingredients for each season
+    winter_ingr=get_top_ingredients(winter, ingr_map, excluded_ingredients=None, top_n=200)
+    spring_ingr=get_top_ingredients(spring, ingr_map, excluded_ingredients=None, top_n=200)
+    summer_ingr=get_top_ingredients(summer, ingr_map, excluded_ingredients=None, top_n=200)
+    autumn_ingr=get_top_ingredients(autumn, ingr_map, excluded_ingredients=None, top_n=200)
+
+    return winter_ingr,spring_ingr,summer_ingr,autumn_ingr
+
+def unique_ingr(winter_ingr,spring_ingr,summer_ingr,autumn_ingr):
+    """
+    This function return the unique ingredients used during each season by comparing all the ingredients used in
+    one season to all the other seasons. 
+
+    Args:
+        winter_ingr (pd.series): ingredients used during winter
+        spring_ingr (pd.series): ingredients used during spring
+        summer_ingr (pd.series): ingredients used during summer
+        autumn_ingr (pd.series): ingredients used during autumn
+
+    Returns:
+        winter_unique,spring_unique,summer_unique,autumn_unique (list): return a list for each season of unique ingredients 
+    """
+
+    # Initialize empty lists to store unique ingredient for each season
+    winter_unique=[]
+    spring_unique=[]
+    summer_unique=[]
+    autumn_unique=[]
+
+    # For each season, identify unique index 
+    for i in winter_ingr.index:
+        if i not in spring_ingr.index and i not in summer_ingr.index and i not in autumn_ingr.index : 
+            winter_unique.append(i)
+    for i in spring_ingr.index:
+        if i not in winter_ingr.index and i not in summer_ingr.index and i not in autumn_ingr.index : 
+            spring_unique.append(i)
+    for i in summer_ingr.index:
+        if i not in winter_ingr.index and i not in spring_ingr.index and i not in autumn_ingr.index : 
+            summer_unique.append(i)
+    for i in autumn_ingr.index:
+        if i not in winter_ingr.index and i not in summer_ingr.index and i not in spring_ingr.index : 
+            autumn_unique.append(i)
+
+    # Return unique indices for each season as a list
+    return winter_unique,spring_unique,summer_unique,autumn_unique
+  
+def add_season(df):
+    """ Add a season column to the dataframe """
+    def get_season(month):
+        if month in ('12', '01', '02'):
+            return 'winter'
+        elif month in ('03', '04', '05'):
+            return 'spring'
+        elif month in ('06', '07', '08'):
+            return 'summer'
+        elif month in ('09', '10', '11'):
+            return 'autumn'
+
+    df['season'] = df['month_date'].map(get_season)
+    return df
+
+
+def count_recipes_season(df):
+    """ Count recipes per season """
+    if 'season' not in list(df.columns):
+        df['season'] = add_season(df)
+
+    # count recipes per season
+    recipe_per_season = {'winter': len(df[df['season'] == 'winter']),
+                         'spring': len(df[df['season'] == 'spring']),
+                         'summer': len(df[df['season'] == 'summer']),
+                         'autumn': len(df[df['season'] == 'autumn'])}
+
+    return recipe_per_season
 
 def user_recipes(merged_df, user_id):
     """Finds the recipes published by the user
@@ -202,4 +311,3 @@ def user_recipes(merged_df, user_id):
     recipes_user_df = merged_df.loc[merged_df["contributor_id"] == user_id]
 
     return recipes_user_df 
-
