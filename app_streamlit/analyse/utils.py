@@ -2,7 +2,7 @@
 """
 import ast
 import pandas as pd
-from analyse.classification_values import main_values
+from .classification_values import main_values
 
 def count_contributors_by_recipe_range_with_bins(df):
     """
