@@ -5,14 +5,14 @@ Created on Thu Oct 17 11:24:19 2024
 @author: Sarah
 """
 
-from preprocess import prepare_final_dataframe
-from preprocess.merging import dataframe_concat
+from load_data.preprocess.clean_dataframe import prepare_final_dataframe
+from load_data.preprocess.merging import dataframe_concat
 import pandas as pd
 
 
 class DataFrameLoadder():
     # FIXME : --> add upload csv files
-    def __init__(self,  path_raw_interaction: str, path_raw_recipes: str, pp_recipe):
+    def __init__(self,  path_raw_interaction: str, path_raw_recipes: str, pp_recipe: str):
         """
         Dataset Loadder
 
@@ -29,7 +29,7 @@ class DataFrameLoadder():
         """
         self.path_raw_interaction = path_raw_interaction
         self.path_raw_recipes = path_raw_recipes
-        self.pp_recipe = pp_recipe
+        self.path_pp_recipe = pp_recipe
 
     def __getitem__(self, df_name: str):
         if not isinstance(df_name, str):
@@ -45,11 +45,18 @@ class DataFrameLoadder():
     def load(self):
         try:
             self.raw_interaction = pd.read_csv(self.path_raw_interaction)
-            self.raw_recipes = pd.read_csv(self.raw_recipes)
-            self.pp_recipe = pd.read_csv(self.pp_recipe)
+            self.raw_recipes = pd.read_csv(self.path_raw_recipes)
+            self.pp_recipe = pd.read_csv(self.path_pp_recipe)
             self.df = prepare_final_dataframe(
-                self.raw_interaction, self.raw_recipes, self.pp_recipes)
+                self.raw_interaction, self.raw_recipes, self.pp_recipe)
         except FileNotFoundError:
             print('--- FILE NOT FOUND --- check csv creation ')
         except Exception as e:
             print(' -- UNEXPECTED ERROR --- : ', e)
+
+        return self.df
+
+
+df = DataFrameLoadder(path_raw_interaction='data_files/RAW_interactions.csv',
+                      path_raw_recipes='data_files/RAW_recipes.csv',
+                      pp_recipe='data_files/PP_recipes.csv')
