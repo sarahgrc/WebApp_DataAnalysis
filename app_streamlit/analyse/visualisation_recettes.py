@@ -1,3 +1,4 @@
+import numpy as np
 
 def visualisation_seasons(df):
     """
@@ -5,4 +6,4 @@ def visualisation_seasons(df):
     :param df:
     :return:
     """
-    pass
+
