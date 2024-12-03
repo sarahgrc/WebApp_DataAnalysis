@@ -6,6 +6,7 @@ import pandas as pd
 from .classification_values import main_values
 
 
+
 def count_contributors_by_recipe_range_with_bins(df):
     """
     Categorizes contributors based on the number of unique recipes they have contributed 
@@ -188,3 +189,45 @@ def get_top_ingredients(merged_df, df_ingr_map, excluded_ingredients=None, top_n
     )
 
     return filtered_ingredient_counts
+
+
+
+def trendy_ingredients_by_seasons(df):
+    dico_season_months = {'winter': ['01', '02', '03'], 'spring': [
+        '04', '05', '06'], 'summer': ['07', '08', '09'], 'autumn': ['11', '12', '13']}
+
+    dico_ingredients_seasons = {}
+    for i in dico_season_months.keys():
+        if i == 'winter':
+            winter = main_values()
+
+
+def add_season(df):
+    """ Add a season column to the dataframe """
+    def get_season(month):
+        if month in ('12', '01', '02'):
+            return 'winter'
+        elif month in ('03', '04', '05'):
+            return 'spring'
+        elif month in ('06', '07', '08'):
+            return 'summer'
+        elif month in ('09', '10', '11'):
+            return 'autumn'
+
+    df['season'] = df['month_date'].map(get_season)
+    return df
+
+
+def count_recipes_season(df):
+    """ Count recipes per season """
+    if 'season' not in list(df.columns):
+        df['season'] = add_season(df)
+
+    # count recipes per season
+    recipe_per_season = {'winter': len(df[df['season'] == 'winter']),
+                         'spring': len(df[df['season'] == 'spring']),
+                         'summer': len(df[df['season'] == 'summer']),
+                         'autumn': len(df[df['season'] == 'autumn'])}
+
+    return recipe_per_season
+
