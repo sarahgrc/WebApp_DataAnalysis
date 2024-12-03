@@ -1,4 +1,5 @@
-import streamlit as st 
+import streamlit as st
+
 
 def display_recipes_page():
     """
