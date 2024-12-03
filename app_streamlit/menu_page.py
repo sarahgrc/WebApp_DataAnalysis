@@ -7,11 +7,11 @@ def display_menu_page():
     Display the menu page content.
     """
 
-    st.title("Recipe and Consumer Data Analysis")
+    st.title("Recipe and User Data Analysis")
 
     # Get path of the images 
     current_dir = os.path.dirname(__file__)
-    images_path = os.path.abspath(os.path.join(current_dir, "..\..", "images"))
+    images_path = os.path.abspath(os.path.join(current_dir, "..", "images"))
     image_1_path =os.path.join(images_path, "recette_1.png")
     image_2_path =os.path.join(images_path, "recette_2.png")   
     

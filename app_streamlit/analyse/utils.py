@@ -2,7 +2,7 @@
 """
 import ast
 import pandas as pd
-from classification_values import main_values
+from analyse.classification_values import main_values
 
 def count_contributors_by_recipe_range_with_bins(df):
     """
@@ -188,4 +188,18 @@ def trendy_ingredients_by_seasons(df):
         if i == 'winter':
             winter=main_values()
             
+
+def user_recipes(merged_df, user_id):
+    """Finds the recipes published by the user
+
+    Args:
+        merged_df (pd.DataFrame): DataFrame with recipe data, including 'recipe_id' and 'ingredient_ids'.
+        user_id (int): Contributor id of the user
+
+    Returns:
+        pd.Series: Top `top_n` ingredients and their counts.
+    """
+    recipes_user_df = merged_df.loc[merged_df["contributor_id"] == user_id]
+
+    return recipes_user_df 
 

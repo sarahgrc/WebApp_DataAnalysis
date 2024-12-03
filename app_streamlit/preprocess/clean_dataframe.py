@@ -45,7 +45,7 @@ def prepare_final_dataframe(raw_interaction, raw_recipes, pp_recipes):
         df_merged = df_merged[df_merged['minutes'] <= 240]  # Keep values <= 240
 
     # Step 5 : Remove columns "description" et "rating"
-    columns_to_drop = ['description', 'rating']
+    columns_to_drop = ['description']
     df_merged.drop(columns=[col for col in columns_to_drop if col in df_merged.columns], inplace=True)
 
     return df_merged
