@@ -6,7 +6,8 @@ from recipes_page import display_recipes_page
 from profile_page import display_profile_page
 from load_data.preprocess.clean_dataframe import prepare_final_dataframe
 # Set the page configuration
-st.set_page_config(page_title="Data Manager", page_icon=":material/edit:")
+st.set_page_config(page_title="Data Manager", page_icon=":material/edit:",layout="wide")
+
 
 # Initialize session state for login status and clean_df
 if "logged_in" not in st.session_state:
