@@ -50,7 +50,7 @@ def add_columns(df_target, df_source, key_target, key_source, columns_to_add):
 
     return df_result
 
- def drop_columns(df, columns_to_drop):
+def drop_columns(df, columns_to_drop):
     """
     Function that drops columns
 
