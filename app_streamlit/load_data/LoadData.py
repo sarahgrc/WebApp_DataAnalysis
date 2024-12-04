@@ -57,6 +57,4 @@ class DataFrameLoadder():
         return self.df
 
 
-df = DataFrameLoadder(path_raw_interaction='data_files/RAW_interactions.csv',
-                      path_raw_recipes='data_files/RAW_recipes.csv',
-                      pp_recipe='data_files/PP_recipes.csv')
+
