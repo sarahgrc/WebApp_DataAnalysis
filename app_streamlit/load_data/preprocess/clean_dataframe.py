@@ -1,52 +1,72 @@
 import pandas as pd
+from load_data.preprocess.df_aggregate import df_aggregate
+from load_data.preprocess.merging import dataframe_concat
+from load_data.preprocess.add_drop_column import add_columns
+from load_data.preprocess.add_drop_column import drop_columns
+from load_data.preprocess.cleaning_data import outliers_df
+from load_data.preprocess.cleaning_data import date_separated
+
+
 
 def prepare_final_dataframe(raw_interaction, raw_recipes, pp_recipes):
     """
-    Prepare a new clean dataframe, that will be used for the analysis,
-    by using other functions. 
+    Prépare un nouveau DataFrame propre qui sera utilisé pour l'analyse,
+    en utilisant d'autres fonctions.
 
     Args:
-        raw_interaction (DataFrame): raw dataFrame of interactions from users 
-        raw_recipes (DataFrame): raw dataFrame with recipes informations 
-        pp_recipes (DataFrame): recipies dataFrame preprocessed
+        raw_interaction (DataFrame): DataFrame brute des interactions des utilisateurs.
+        raw_recipes (DataFrame): DataFrame brute avec les informations des recettes.
+        pp_recipes (DataFrame): DataFrame pré-traitée des recettes.
 
     Returns:
-        df_merged (DataFrame): final dataFrame
+        df_merged (DataFrame): DataFrame finale prête pour l'analyse.
     """
 
-    # Step 1 : Merging raw_interaction and raw_recipes on "recipe_id" and "id" 
-    # Rename 'id' to 'recipe_id' in raw_recipes 
+    # step 1 : merge raw_interaction et raw_recipes on "recipe_id" et "id"
     raw_recipes_renamed = raw_recipes.rename(columns={'id': 'recipe_id'})
-    df_merged = pd.merge(raw_interaction, raw_recipes_renamed, on="recipe_id", how="left")
+    df_merged = dataframe_concat([raw_interaction, raw_recipes_renamed], key='recipe_id', join="left")
+    df_merged.reset_index(drop=True, inplace=True)
 
-    # Step 2 : Add columns 'ingredient_ids', 'ingredient_tokens' from pp_recipes
+    # step 2 : add columns 'ingredient_ids', 'ingredient_tokens' on pp_recipes
     pp_recipes_renamed = pp_recipes.rename(columns={'id': 'recipe_id'})
-    df_merged = pd.merge(
+    df_merged = add_columns(
         df_merged,
-        pp_recipes_renamed[['recipe_id', 'ingredient_ids', 'ingredient_tokens']],
-        on="recipe_id",
-        how="left"
+        pp_recipes_renamed,
+        key_target='recipe_id',
+        key_source='recipe_id',
+        columns_to_add=['ingredient_ids', 'ingredient_tokens']
     )
 
-    # Step 3 : Separate columns "date" and "submitted" and remove useless columns
+    df_merged.reset_index(drop=True, inplace=True)
+
+    # step 3 : seperate date and submitted and delete column 
     if 'date' in df_merged.columns:
-        df_merged[['year_date', 'month_date', 'day_date']] = df_merged['date'].str.split('-', expand=True)
-        df_merged.drop(columns=['day_date', 'date'], inplace=True)  # Delete columns 'day_date' and 'date'
+        df_merged = date_separated('date', df_merged)
+        df_merged = drop_columns(df_merged, ['day', 'date'])
 
     if 'submitted' in df_merged.columns:
-        df_merged[['year_submitted', 'month_submitted', 'day_submitted']] = df_merged['submitted'].str.split('-', expand=True)
-        df_merged.drop(columns=['day_submitted', 'submitted'], inplace=True)  # Delete columns 'day_submitted' and 'submitted'
+        df_merged = date_separated('submitted', df_merged)
+        df_merged = drop_columns(df_merged, ['day', 'submitted'])
 
-    # Step 4 : Cleaning data by removing outliers 
+    
+    df_merged.reset_index(drop=True, inplace=True)
+
+    # Step 4 : clean dataframe
     if 'n_steps' in df_merged.columns:
-        df_merged = df_merged[df_merged['n_steps'] <= 20]  # Keep values <= 20
+        df_merged.reset_index(drop=True, inplace=True)
+        outliers_n_steps = outliers_df(df_merged, 'n_steps', treshold_sup=20)
+        df_merged = df_merged[~df_merged['n_steps'].isin(outliers_n_steps)]
+        df_merged.reset_index(drop=True, inplace=True)
 
     if 'minutes' in df_merged.columns:
-        df_merged = df_merged[df_merged['minutes'] <= 240]  # Keep values <= 240
+        df_merged.reset_index(drop=True, inplace=True)
+        outliers_minutes = outliers_df(df_merged, 'minutes', treshold_sup=240)
+        df_merged = df_merged[~df_merged['minutes'].isin(outliers_minutes)]
+        df_merged.reset_index(drop=True, inplace=True)
 
-    # Step 5 : Remove columns "description" et "rating"
+    # step 5 : delate unusfull columns
     columns_to_drop = ['description']
-    df_merged.drop(columns=[col for col in columns_to_drop if col in df_merged.columns], inplace=True)
+    df_merged = drop_columns(df_merged, columns_to_drop)
+    df_merged = df_aggregate(df_merged)
 
     return df_merged
-

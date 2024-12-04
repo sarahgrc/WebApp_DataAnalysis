@@ -4,15 +4,19 @@ import ast
 import pandas as pd
 from .classification_values import main_values
 
+
+def metrics_main_contributor(df):
+    num_contributors = df['contributor_id'].nunique()
+    num_recipes = df['recipe_id'].nunique()
+    return num_contributors, num_recipes
+
 def count_contributors_by_recipe_range_with_bins(df):
     """
     Categorizes contributors based on the number of unique recipes they have contributed 
     and counts how many contributors fall into each category.
 
     Parameters:
-    - df (pd.DataFrame): A DataFrame containing at least two columns: 
-        'contributor_id' (unique identifier for contributors) 
-        'recipe_id' (unique identifier for recipes).
+    - df (pd.DataFrame): A DataFrame containing recipe data, including 'recipe_id' and 'contributor_id'.
 
     Returns:
     - pd.Series: A series where the index represents the recipe range categories 
@@ -24,13 +28,13 @@ def count_contributors_by_recipe_range_with_bins(df):
     - '6 to 8 recipes': Contributors with 6 to 8 unique recipes.
     - 'More than 8 recipes': Contributors with more than 8 unique recipes.
     """
+
     # Compter le nombre de recettes uniques par contributeur
     recipe_counts = df.groupby('contributor_id')['recipe_id'].nunique()
 
     # Définir les plages de recettes (bins)
     bins = [0, 1, 5, 8, float('inf')]
-    labels = ['1 recette', '2 à 5 recettes',
-              '6 à 8 recettes', 'Plus de 10 recettes']
+    labels = ['1 recipe', '2-5 recipes', '6-8 recipes', '> 8 recipes']
 
     # Découper en catégories
     binned_counts = pd.cut(recipe_counts, bins=bins, labels=labels, right=True)
@@ -41,101 +45,84 @@ def count_contributors_by_recipe_range_with_bins(df):
     return contributor_counts_by_bin
 
 
-def top_contributors_by_commented_recipes(df, top_n=10):
+def top_commented_recipes(df, top_n=10):
     """
-    Returns the top X contributors who have published the most unique recipes.
+    Extracts the top N recipes with the highest number of comments, including the contributor and recipe details.
 
     Parameters:
-    - df (pd.DataFrame): A DataFrame containing recipe data.
-    - top_n (int): Number of top contributors to return.
+    - df (pd.DataFrame): A DataFrame containing recipe data, including 'recipe_id', 'contributor_id', and 'num_comments'.
+    - top_n (int): The number of top recipes to return.
 
     Returns:
-    - pd.Series: The `top_n` contributors with the count of unique recipes they have published.
+    - pd.DataFrame: A DataFrame containing 'contributor_id', 'recipe_id', and 'num_comments' for the top N recipes.
     """
-    # Filtrer les recettes qui ont des commentaires
-    commented_recipes = df.dropna(subset=['review'])
-
-    # Compter le nombre de commentaires par recette, puis par contributeur
-    comments_per_contributor = commented_recipes.groupby(
-        'contributor_id')['recipe_id'].count().sort_values(ascending=False).head(top_n)
-
-    return comments_per_contributor
+    # Appeler la fonction d'agrégation pour obtenir un DataFrame unique par recette
 
 
-def top_tags(df, top_n=20):
+    # Trier par 'num_comments' en ordre décroissant et sélectionner les top N
+    top_recipes = df.sort_values(by='num_comments', ascending=False).head(top_n)
+
+    # Garder uniquement les colonnes 'contributor_id', 'recipe_id' et 'num_comments'
+    result = top_recipes[['contributor_id', 'recipe_id', 'num_comments']]
+
+    return result
+
+
+def get_top_tags(df, most_commented=False, top_recipes=20, top_n=10):
     """
-    Ensures each recipe_id is unique and returns the most frequently used tags.
+    Returns the most frequently used tags either for all recipes or for the top most commented recipes.
 
     Parameters:
     - df (pd.DataFrame): A DataFrame containing recipe data.
-    - top_n (int): Number of most frequent tags to return.
-
-    Returns:
-    - pd.Series: The `top_n` most frequently used tags.
-
-    Raises:
-    - ValueError: If duplicate `recipe_id` entries are detected.
-    """
-
-    # Exploser les tags pour avoir des lignes individuelles
-    tags_series = df['tags'].apply(eval).explode()
-
-    # Compter les tags les plus fréquents
-    top_tags_used = tags_series.value_counts().head(top_n)
-    return top_tags_used
-
-
-def top_tags_most_commented(df, top_recipes=20, top_n=10):
-    """
-    Returns the most frequently used tags among the top X most commented recipes.
-
-    Parameters:
-    - df (pd.DataFrame): A DataFrame containing recipe data.
-    - top_recipes (int): Number of most commented recipes to consider.
+    - most_commented (bool): If True, only consider the most commented recipes.
+    - top_recipes (int): Number of most commented recipes to consider (used only if most_commented=True).
     - top_n (int): Number of most frequent tags to return.
 
     Returns:
     - pd.Series: The `top_n` most frequently used tags.
     """
 
-    # Supprimer les recettes sans commentaires
-    commented_recipes = df.dropna(subset=['review'])
-
-    # Identifier les recettes les plus commentées
-    most_commented = commented_recipes['recipe_id'].value_counts().head(
-        top_recipes).index
-
-    # Filtrer pour ces recettes
-    filtered_df = df[df['recipe_id'].isin(most_commented)]
+    if most_commented:
+        # Identifier les recettes les plus commentées
+        most_commented = df.sort_values(by='num_comments', ascending=False).head(top_recipes)
+        filtered_df = df[df['recipe_id'].isin(most_commented['recipe_id'])]
+    else:
+        # Utiliser toutes les recettes
+        filtered_df = df
 
     # Exploser les tags et compter
     tags_series = filtered_df['tags'].apply(eval).explode()
-    top_tags_commented = tags_series.value_counts().head(top_n)
-    return top_tags_commented
+    top_tags = tags_series.value_counts().head(top_n)
+
+    return top_tags
 
 
 def top_contributors_by_recipes(df, top_n=10):
     """
-    Identifies the top contributors based on the number of unique recipes they have published.
+    Finds the top contributors with the highest number of recipes in the dataset.
 
-    Args:
-        df (pd.DataFrame): DataFrame containing recipe data with at least the following columns:
-            - 'contributor_id': Unique identifier for contributors.
-            - 'recipe_id': Unique identifier for recipes.
-        top_n (int, optional): Number of top contributors to return. Defaults to 10.
+    Parameters:
+    - df (pd.DataFrame): A DataFrame containing recipe data, including 'contributor_id'.
+    - top_n (int): Number of top contributors to return.
 
     Returns:
-        pd.Series: A series with the top `top_n` contributors as the index and the count of unique recipes 
-                   they have published as the values, sorted in descending order. Returns None if required 
-                   columns are missing.
+    - pd.DataFrame: A DataFrame containing the top contributors and their total number of recipes.
     """
-    if 'contributor_id' not in df or 'recipe_id' not in df:
-        return None
-    unique_recipes_df = df.drop_duplicates(subset='recipe_id')
-    return unique_recipes_df['contributor_id'].value_counts().head(top_n)
+
+    # Compter le nombre de recettes par contributeur
+    contributor_counts = df.groupby('contributor_id')['recipe_id'].count()
+
+    # Trier par ordre décroissant et sélectionner les top N contributeurs
+    top_contributors = contributor_counts.sort_values(ascending=False).head(top_n)
+
+    # Réinitialiser l'index pour un DataFrame structuré
+    result = top_contributors.reset_index()
+    result.columns = ['contributor_id', 'num_recipes']
+
+    return result
 
 
-def get_top_ingredients(merged_df, df_ingr_map, excluded_ingredients=None, top_n=10):
+def get_top_ingredients2(df, df_ingr_map, excluded_ingredients=None, top_n=10):
     """Finds the most frequently used ingredients, excluding common ones.
 
     Args:
@@ -151,8 +138,8 @@ def get_top_ingredients(merged_df, df_ingr_map, excluded_ingredients=None, top_n
     # Create a dictionary to map ingredient IDs to their simplified names
     ingr_map = df_ingr_map.set_index('id')['replaced'].to_dict()
 
-    # Remove duplicate recipes
-    unique_recipes = merged_df.drop_duplicates(subset='recipe_id')
+
+
 
     # Function to map ingredient IDs to simplified ingredient names
     def map_ingredient_ids(ids, ingr_map):
@@ -164,7 +151,7 @@ def get_top_ingredients(merged_df, df_ingr_map, excluded_ingredients=None, top_n
             return []
 
     # Apply mapping to unique recipes
-    unique_recipes['mapped_ingredients'] = unique_recipes['ingredient_ids'].apply(
+    df['mapped_ingredients'] = df['ingredient_ids'].apply(
         lambda x: map_ingredient_ids(x, ingr_map)
     )
 
@@ -177,7 +164,7 @@ def get_top_ingredients(merged_df, df_ingr_map, excluded_ingredients=None, top_n
 
     # Filter/count occurrences of ingredients
     filtered_ingredient_counts = (
-        unique_recipes['mapped_ingredients']
+        df['mapped_ingredients']
         .explode()
         # Exclude common ingredients
         .loc[lambda x: ~x.isin(excluded_ingredients)]
@@ -311,3 +298,16 @@ def user_recipes(merged_df, user_id):
     recipes_user_df = merged_df.loc[merged_df["contributor_id"] == user_id]
 
     return recipes_user_df 
+
+def count_recipes_per_user(df):
+    """
+    Counts the number of unique recipes published by each contributor.
+
+    Args:
+        df (pd.DataFrame): DataFrame with recipe data, including 'recipe_id' and 'contributor_id'.
+
+    Returns:
+        pd.Series: A series with contributors as the index and their unique recipe counts as values.
+    """
+    # Compter le nombre de recettes uniques pour chaque contributeur
+    return df.groupby('contributor_id')['recipe_id'].nunique()
