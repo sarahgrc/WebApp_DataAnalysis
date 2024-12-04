@@ -10,8 +10,8 @@ from analyse.utils import count_contributors_by_recipe_range_with_bins
 from analyse.utils import get_top_tags
 from analyse.utils import get_top_ingredients2
 from analyse.utils import top_commented_recipes
-from analyse.utils import df_aggregate
 from analyse.utils import metrics_main_contributor
+from analyse.utils import top_contributors_by_recipes
 
 df_ingr_map = pd.read_pickle(r"C:\Users\Lily\Documents\WebApp_DataAnalysis\data_files\ingr_map.pkl")
 
@@ -35,10 +35,7 @@ def my_metric(label, value, bg_color, icon="fas fa-asterisk"):
 
 
 def display_contributors_page():
-    clean_df = st.session_state.clean_df
-
-    # dfwith recipes in lines 
-    df_agg = df_aggregate(clean_df)
+    df_agg = st.session_state.clean_df
 
     st.sidebar.markdown('<h1 style="color:orange;" font-size:24px;">Pick the granularity</h1>', unsafe_allow_html=True)
     
@@ -93,8 +90,8 @@ def display_contributors_page():
         st.pyplot(fig)
 
         # Section 2: Top Contributors
-        st.subheader("Best Commented Recipes")
         top_n = st.selectbox("Select the number of top recipes to display:", [3, 5, 10, 15])
+        st.subheader(f"Best {top_n} Commented Recipes")
         top_recipes = top_commented_recipes(df_agg, top_n=top_n)
 
         # graphic
@@ -122,7 +119,6 @@ def display_contributors_page():
         ax.set_yticks(y_positions)
         ax.set_yticklabels(top_recipes['recipe_id'], fontsize=10)
         ax.set_xlabel("Number of Comments", fontsize=12)
-        ax.set_title(f"Top {top_n} Recipes with Most Comments", fontsize=14)
         ax.invert_yaxis()  # Inverser pour que le top 1 soit en haut
         ax.spines['top'].set_visible(False)
         ax.spines['right'].set_visible(False)
@@ -167,7 +163,11 @@ def display_contributors_page():
 
     elif selected_option == "Focus on a specific contributor":
         st.markdown('<p style="color:orange; font-weight:bold; font-size:35px;">Focus on a specific contributor</p>', unsafe_allow_html=True)
-        # Aadd 
+        
+        #section 1 
+        st.subheader("Distribution des recettes par contributeur")
+        recipe_bins = top_contributors_by_recipes(df_agg, top_n=10)
+        st.bar_chart(recipe_bins)
 
 
     else:
