@@ -4,40 +4,36 @@ import ast
 import pandas as pd
 from .classification_values import main_values
 
-def df_aggregate(df):
-    """
-    Aggregates data to have one row per recipe_id, with the original columns (excluding 'user_id') plus:
-    - num_users_commented: Number of unique users who commented on the recipe.
-    - avg_reviews_per_user: Total number of reviews for the recipe.
-
-    Args:
-        df (pd.DataFrame): DataFrame containing recipe data, including 'recipe_id', 'user_id', and 'review'.
-
-    Returns:
-        pd.DataFrame: Aggregated DataFrame with one row per recipe_id, original columns (excluding 'user_id'),
-                      and additional metrics.
-    """
-    # Calculer les deux nouvelles colonnes
-    aggregated_metrics = df.groupby('recipe_id').agg(
-        num_comments=('user_id', 'nunique'),
-        avg_reviews=('rating', 'mean')
-    ).reset_index()
-
-    # Garder une seule ligne par recipe_id avec toutes les colonnes originales
-    unique_recipes = df.drop_duplicates(subset=['recipe_id']).reset_index(drop=True)
-
-    # Supprimer la colonne 'user_id' du DataFrame unique
-    unique_recipes = unique_recipes.drop(columns=['user_id','rating'])
-
-    # Fusionner les colonnes calculées avec les colonnes originales
-    result = unique_recipes.merge(aggregated_metrics, on='recipe_id', how='left')
-
-    return result
 
 def metrics_main_contributor(df):
     num_contributors = df['contributor_id'].nunique()
     num_recipes = df['recipe_id'].nunique()
     return num_contributors, num_recipes
+
+def average_comments_per_contributor(df):
+    """
+    Calculates the average number of comments per recipe for each contributor.
+
+    Parameters:
+    - df (pd.DataFrame): A DataFrame containing recipe data, including 'contributor_id' and 'num_comments'.
+
+    Returns:
+    - pd.DataFrame: A DataFrame with 'contributor_id' and 'avg_comments_per_recipe'.
+    """
+    # Vérifier que les colonnes nécessaires existent
+    if 'contributor_id' not in df.columns or 'num_comments' not in df.columns:
+        raise ValueError("Le DataFrame doit contenir les colonnes 'contributor_id' et 'num_comments'.")
+
+    # Calculer la moyenne des commentaires par contributeur
+    avg_comments = df.groupby('contributor_id')['num_comments'].mean().reset_index()
+
+    # Renommer les colonnes pour plus de clarté
+    avg_comments.columns = ['contributor_id', 'avg_comments_per_recipe']
+
+    # Trier par moyenne décroissante
+    avg_comments = avg_comments.sort_values(by='avg_comments_per_recipe', ascending=False)
+
+    return avg_comments
 
 def count_contributors_by_recipe_range_with_bins(df):
     """
@@ -92,7 +88,7 @@ def top_commented_recipes(df, top_n=10):
     top_recipes = df.sort_values(by='num_comments', ascending=False).head(top_n)
 
     # Garder uniquement les colonnes 'contributor_id', 'recipe_id' et 'num_comments'
-    result = top_recipes[['contributor_id', 'recipe_id', 'num_comments']]
+    result = top_recipes[['contributor_id', 'recipe_id', 'num_comments','name']]
 
     return result
 
