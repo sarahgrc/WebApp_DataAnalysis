@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import numpy as np
 import seaborn as sns
+import plotly.express as px
 from wordcloud import WordCloud
 import matplotlib.pyplot as plt
 from analyse.utils import count_contributors_by_recipe_range_with_bins
@@ -11,7 +12,6 @@ from analyse.utils import get_top_tags
 from analyse.utils import get_top_ingredients2
 from analyse.utils import top_commented_recipes
 from analyse.utils import metrics_main_contributor
-from analyse.utils import top_contributors_by_recipes
 
 df_ingr_map = pd.read_pickle(r"C:\Users\Lily\Documents\WebApp_DataAnalysis\data_files\ingr_map.pkl")
 
@@ -34,9 +34,8 @@ def my_metric(label, value, bg_color, icon="fas fa-asterisk"):
     st.markdown(lnk + htmlstr, unsafe_allow_html=True)
 
 
-def display_contributors_page():
-    df_agg = st.session_state.clean_df
-
+def display_contributors_page(df):
+    # dfwith recipes in lines 
     st.sidebar.markdown('<h1 style="color:orange;" font-size:24px;">Pick the granularity</h1>', unsafe_allow_html=True)
     
     selected_option = st.sidebar.radio(
@@ -49,8 +48,8 @@ def display_contributors_page():
         st.markdown('<p style="color:orange; font-weight:bold; font-size:35px;">Global contributor\'s overview</p>', unsafe_allow_html=True)
         st.write("There is an overview to better understand what makes a good contributor, to make you a better contributor.")
 
-        # Section 1:main metrics
-        num_contributors, num_recipes = metrics_main_contributor(df_agg)
+        # Section 0 :main metrics
+        num_contributors, num_recipes = metrics_main_contributor(df)
         orange1 = (255, 240, 186)
         orange2 = (255, 204, 153)
         icon_contributors = "fas fa-users"
@@ -62,76 +61,72 @@ def display_contributors_page():
         with col2:
             my_metric("Number of Recipes", num_recipes, orange2, icon_recipes)
 
-       # Section 1: pie chart
-        st.subheader("Distribution of contributors by number of recipes")
-        recipe_bins = count_contributors_by_recipe_range_with_bins(df_agg)
+        # Section 1: Histogram
+        # Appel à votre fonction pour obtenir les données
+        recipe_bins = count_contributors_by_recipe_range_with_bins(df)
 
-        cmap = cm.get_cmap("Oranges", len(recipe_bins))  # Palette "Oranges"
-        colors = [cmap(i) for i in range(len(recipe_bins))]
+        # Conversion en DataFrame pour Plotly
+        df_plot = recipe_bins.reset_index()  # Convertir la série en DataFrame
+        df_plot.columns = ["Recipe Range", "Contributors"]  # Renommer les colonnes
 
-        def round_autopct(pct):
-            return '{:.0f}%'.format(pct) if pct > 0 else ''
-
-        # donuts creation
-        fig, ax = plt.subplots(figsize=(2, 2))
-        ax.pie(
-            recipe_bins.values,
-            labels=recipe_bins.index,
-            autopct=round_autopct,
-            startangle=90,
-            colors=colors,
-            textprops={'fontsize': 5},
-            labeldistance=1.1,
-            wedgeprops={'linewidth': 1, 'edgecolor': 'white'}
+        # Création du pie chart avec Plotly
+        fig = px.pie(
+            df_plot,
+            names="Recipe Range",           # Catégories pour le camembert
+            values="Contributors",          # Valeurs associées
+            color="Recipe Range",           # Coloration par catégorie
+            color_discrete_sequence=px.colors.sequential.Oranges,  # Palette de couleurs
         )
 
-        centre_circle = plt.Circle((0, 0), 0.70, fc='white')
-        fig.gca().add_artist(centre_circle)
-        st.pyplot(fig)
-
-        # Section 2: Top Contributors
+        # Personnalisation
+        fig.update_traces(
+            textposition="inside",          # Position du texte à l'intérieur des sections
+            textinfo="percent+label"        # Affiche pourcentage et label
+        )
+        fig.update_layout(
+            showlegend=True,                # Affiche la légende
+            template="simple_white"         # Thème clair
+        )
+        # Affichage dans Streamlit
+        st.subheader("Contributors by Recipe Range (Pie Chart)")
+        st.plotly_chart(fig, use_container_width=True)
+        
+        # Section 2: Best Commented Recipes
+        st.subheader("Best Commented Recipes")
         top_n = st.selectbox("Select the number of top recipes to display:", [3, 5, 10, 15])
-        st.subheader(f"Best {top_n} Commented Recipes")
-        top_recipes = top_commented_recipes(df_agg, top_n=top_n)
+        top_recipes = top_commented_recipes(df, top_n=top_n)  # Cette fonction doit retourner un DataFrame
+        st.write("Available columns in DataFrame:", df.columns)
+        st.write(df.head())  # Affiche les premières lignes pour inspection
 
-        # graphic
-        fig, ax = plt.subplots(figsize=(8, 5))
-        y_positions = range(len(top_recipes))
-        bars = ax.barh(
-            y_positions, 
-            top_recipes['num_comments'], 
-            color='#FFA500',
-            height=0.8
+        fig = px.bar(
+            top_recipes,
+            x="num_comments",              # Nombre de commentaires (axe X)
+            y="name",                      # Nom des recettes (axe Y)
+            orientation="h",               # Barres horizontales
+            text="contributor_id",         # Texte pour identifier les contributeurs
+            labels={"num_comments": "Number of Comments", "name": "Recipe Name"},
+            color="num_comments",          # Coloration en fonction du nombre de commentaires
+            color_continuous_scale="Oranges"  # Palette de couleurs
         )
 
-        # labels
-        for bar, contributor, recipe in zip(bars, top_recipes['contributor_id'], top_recipes['recipe_id']):
-            width = bar.get_width()
-            ax.text(
-                width + 2, 
-                bar.get_y() + bar.get_height() / 2,  
-                f'ID: {contributor}',
-                va='center',
-                fontsize=9
-            )
+        # Personnalisation
+        fig.update_layout(
+            yaxis=dict(
+                categoryorder="total ascending"  # Ordre décroissant pour les barres
+            ),
 
-        #  `recipe_id`
-        ax.set_yticks(y_positions)
-        ax.set_yticklabels(top_recipes['recipe_id'], fontsize=10)
-        ax.set_xlabel("Number of Comments", fontsize=12)
-        ax.invert_yaxis()  # Inverser pour que le top 1 soit en haut
-        ax.spines['top'].set_visible(False)
-        ax.spines['right'].set_visible(False)
-
-        st.pyplot(fig)
-
+            template="simple_white",            # Thème clair et épuré
+            height=400 + top_n * 20             # Ajustement dynamique de la hauteur
+        )
+        # Affichage du graphique dans Streamlit
+        st.plotly_chart(fig, use_container_width=True)
 
         # Section 3: Top Tags
         st.subheader("What are the best tags ?")
         most_commented = st.checkbox("Only most commented recipes", value=False, key="most_commented_checkbox")
         top_n_recipes = st.number_input("How many recipes do you want to analyze:", min_value=1, value=20, step=1, key="num_recipes")
         top_n_tags = st.slider("How many tags you want to display", min_value=5, max_value=50, value=20, key="slider_top_n_tags")
-        tags = get_top_tags(df_agg, most_commented=most_commented, top_recipes=top_n_recipes, top_n=top_n_tags)
+        tags = get_top_tags(df, most_commented=most_commented, top_recipes=top_n_recipes, top_n=top_n_tags)
         wordcloud_input = {tag: count for tag, count in tags.items()}
         wordcloud = WordCloud(width=800, height=400, background_color='white').generate_from_frequencies(wordcloud_input)
         fig, ax = plt.subplots()
@@ -149,7 +144,7 @@ def display_contributors_page():
         user_excluded = st.text_area("Enter ingredients to exclude, separated by commas:", ", ".join(default_excluded))
         excluded_ingredients = set(map(str.strip, user_excluded.split(",")))
         top_n_ingredients = st.number_input("Select the number of top ingredients to display:", min_value=1, value=10, step=1, key="number_top_ingredients")
-        top_ingredients = get_top_ingredients2(df_agg, df_ingr_map, excluded_ingredients, top_n_ingredients)
+        top_ingredients = get_top_ingredients2(df, df_ingr_map, excluded_ingredients, top_n_ingredients)
 
         fig, ax = plt.subplots(figsize=(10, 6))
         sns.barplot(data=top_ingredients.reset_index(), x='mapped_ingredients', y='count', ax=ax, color='orange')
@@ -163,11 +158,7 @@ def display_contributors_page():
 
     elif selected_option == "Focus on a specific contributor":
         st.markdown('<p style="color:orange; font-weight:bold; font-size:35px;">Focus on a specific contributor</p>', unsafe_allow_html=True)
-        
-        #section 1 
-        st.subheader("Distribution des recettes par contributeur")
-        recipe_bins = top_contributors_by_recipes(df_agg, top_n=10)
-        st.bar_chart(recipe_bins)
+        # Aadd 
 
 
     else:
