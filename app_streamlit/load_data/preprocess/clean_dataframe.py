@@ -61,7 +61,7 @@ def prepare_final_dataframe(raw_interaction, raw_recipes, pp_recipes):
     if 'minutes' in df_merged.columns:
         df_merged.reset_index(drop=True, inplace=True)
         outliers_minutes = outliers_df(df_merged, 'minutes', treshold_sup=240)
-        df_merged = df_merged[~df_merged['minutes'].isin(outliers_minutes)]s
+        df_merged = df_merged[~df_merged['minutes'].isin(outliers_minutes)]
         df_merged.reset_index(drop=True, inplace=True)
 
     # step 5 : delate unusfull columns
