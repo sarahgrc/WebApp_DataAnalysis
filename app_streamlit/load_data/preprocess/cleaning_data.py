@@ -1,7 +1,7 @@
 import pandas as pd
 import copy
 
-def outliers(dataframe, column,treshold_sup=None, treshold_inf=None, get_info=False):
+def outliers_df(dataframe, column,treshold_sup=None, treshold_inf=None, get_info=False):
     """
     function that returns a list of all outliers in a column depending on the treshold
     
