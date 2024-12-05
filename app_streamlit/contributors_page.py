@@ -13,7 +13,7 @@ from analyse.utils import get_top_ingredients2
 from analyse.utils import top_commented_recipes
 from analyse.utils import metrics_main_contributor
 
-df_ingr_map = pd.read_pickle(r"C:\Users\Lily\Documents\WebApp_DataAnalysis\data_files\ingr_map.pkl")
+df_ingr_map = pd.read_pickle("../data_files/ingr_map.pkl")
 
 def my_metric(label, value, bg_color, icon="fas fa-asterisk"):
     fontsize = 18
