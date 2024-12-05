@@ -4,6 +4,7 @@ from menu_page import display_menu_page
 from contributors_page import display_contributors_page
 from recipes_page import display_recipes_page 
 from profile_page import display_profile_page
+from load_data.LoadData import DataFrameLoadder
 from load_data.preprocess.clean_dataframe import prepare_final_dataframe
 # Set the page configuration
 st.set_page_config(page_title="Data Manager", page_icon=":material/edit:",layout="wide")
@@ -15,11 +16,8 @@ if "logged_in" not in st.session_state:
 
 if "clean_df" not in st.session_state:
     # Executed only once per session
-    st.session_state.clean_df = prepare_final_dataframe(
-        pd.read_csv('./data_files/RAW_interactions.csv'),
-        pd.read_csv('./data_files/RAW_recipes.csv'),
-        pd.read_csv('./data_files/PP_recipes.csv')
-    ).head(1000)
+    df=DataFrameLoadder('../data_files/RAW_interactions.csv','../data_files/RAW_recipes.csv','../data_files/PP_recipes.csv').load()
+    st.session_state.clean_df = df
 
 # Define the main function
 def main(): 
@@ -28,7 +26,6 @@ def main():
     """
 
     clean_df = st.session_state.clean_df  # Retrieve the data from session state
-
 
     # Show login message if not logged in
     if not st.session_state.logged_in:

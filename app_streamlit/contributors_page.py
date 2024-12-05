@@ -13,7 +13,7 @@ from analyse.utils import top_commented_recipes
 from analyse.utils import metrics_main_contributor
 from analyse.utils import top_contributors_by_recipes
 
-df_ingr_map = pd.read_pickle(r"C:\Users\Lily\Documents\WebApp_DataAnalysis\data_files\ingr_map.pkl")
+df_ingr_map = pd.read_pickle("../data_files/ingr_map.pkl")
 
 def my_metric(label, value, bg_color, icon="fas fa-asterisk"):
     fontsize = 18
@@ -36,7 +36,7 @@ def my_metric(label, value, bg_color, icon="fas fa-asterisk"):
 
 def display_contributors_page():
     df_agg = st.session_state.clean_df
-
+    
     st.sidebar.markdown('<h1 style="color:orange;" font-size:24px;">Pick the granularity</h1>', unsafe_allow_html=True)
     
     selected_option = st.sidebar.radio(

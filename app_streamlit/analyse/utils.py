@@ -174,14 +174,15 @@ def get_top_ingredients2(df, df_ingr_map, excluded_ingredients=None, top_n=10):
 
     return filtered_ingredient_counts
 
-def trendy_ingredients_by_seasons(df,ingr_map):
+def trendy_ingredients_by_seasons(df,ingr_map,top_n):
     """
     This function create a dataframe for each seasons and returns the top 200 ingredients used
 
     Args:
         df (dataframe): dataframe cleaned 
         ingr_map (dataFrame): dataFrame mapping ingredient IDs ('id') to their names ('replaced')
-
+        top_n (int, optional): number of top ingredients to return. Defaults to 200.
+    
     Returns:
         winter_ingr,spring_ingr,summer_ingr,autumn_ingr (pd.series) : four pd.series with the top 200 ingredients used
     """
@@ -199,40 +200,40 @@ def trendy_ingredients_by_seasons(df,ingr_map):
     for i in dico_season_months.keys():
         if i == 'winter':
             for e in dico_season_months[i]:
-                winter = pd.concat([winter, df[df['month_date'] == e]])
+                winter = pd.concat([winter, df[df['month'] == e]])
         if i == 'spring':
             for e in dico_season_months[i]:
-                spring = pd.concat([spring, df[df['month_date'] == e]])
+                spring = pd.concat([spring, df[df['month'] == e]])
         if i == 'summer':
             for e in dico_season_months[i]:
-                summer = pd.concat([summer, df[df['month_date'] == e]])
+                summer = pd.concat([summer, df[df['month'] == e]])
         if i == 'autumn':
             for e in dico_season_months[i]:
-                autumn = pd.concat([autumn, df[df['month_date'] == e]])
+                autumn = pd.concat([autumn, df[df['month'] == e]])
 
     # Get the top 200 ingredients for each season
-    winter_ingr=get_top_ingredients(winter, ingr_map, excluded_ingredients=None, top_n=200)
-    spring_ingr=get_top_ingredients(spring, ingr_map, excluded_ingredients=None, top_n=200)
-    summer_ingr=get_top_ingredients(summer, ingr_map, excluded_ingredients=None, top_n=200)
-    autumn_ingr=get_top_ingredients(autumn, ingr_map, excluded_ingredients=None, top_n=200)
+    winter_ingr=get_top_ingredients2(winter, ingr_map, excluded_ingredients=None, top_n=top_n)
+    spring_ingr=get_top_ingredients2(spring, ingr_map, excluded_ingredients=None, top_n=top_n)
+    summer_ingr=get_top_ingredients2(summer, ingr_map, excluded_ingredients=None, top_n=top_n)
+    autumn_ingr=get_top_ingredients2(autumn, ingr_map, excluded_ingredients=None, top_n=top_n)
 
     return winter_ingr,spring_ingr,summer_ingr,autumn_ingr
 
-def unique_ingr(winter_ingr,spring_ingr,summer_ingr,autumn_ingr):
+def unique_ingr(df,ingr_map,top_n=200):
     """
     This function return the unique ingredients used during each season by comparing all the ingredients used in
     one season to all the other seasons. 
 
     Args:
-        winter_ingr (pd.series): ingredients used during winter
-        spring_ingr (pd.series): ingredients used during spring
-        summer_ingr (pd.series): ingredients used during summer
-        autumn_ingr (pd.series): ingredients used during autumn
+        df (dataframe): dataframe cleaned 
+        ingr_map (dataFrame): dataFrame mapping ingredient IDs ('id') to their names ('replaced')
+        top_n (int, optional): number of top ingredients to return. Defaults to 200.
 
     Returns:
         winter_unique,spring_unique,summer_unique,autumn_unique (list): return a list for each season of unique ingredients 
     """
 
+    winter_ingr,spring_ingr,summer_ingr,autumn_ingr=trendy_ingredients_by_seasons(df,ingr_map,top_n)
     # Initialize empty lists to store unique ingredient for each season
     winter_unique=[]
     spring_unique=[]
@@ -268,7 +269,7 @@ def add_season(df):
         elif month in ('09', '10', '11'):
             return 'autumn'
 
-    df['season'] = df['month_date'].map(get_season)
+    df['season'] = df['month'].map(get_season)
     return df
 
 

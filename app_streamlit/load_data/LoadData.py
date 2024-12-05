@@ -1,10 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Thu Oct 17 11:24:19 2024
-
-@author: Sarah
-"""
-
 from load_data.preprocess.clean_dataframe import prepare_final_dataframe
 from load_data.preprocess.merging import dataframe_concat
 import pandas as pd

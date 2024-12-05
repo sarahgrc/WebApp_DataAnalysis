@@ -1,21 +1,20 @@
 import streamlit as st
 import pandas as pd
 import os
+import seaborn as sns
+import matplotlib.pyplot as plt
 from load_data.LoadData import DataFrameLoadder
-
-
-clean_df = DataFrameLoadder(path_raw_interaction='../data_files/RAW_interactions.csv',
-                      path_raw_recipes='../data_files/RAW_recipes.csv',
-                      pp_recipe='../data_files/PP_recipes.csv').load()
+from analyse.utils import unique_ingr
+from wordcloud import WordCloud
 
 df_ingr_map=pd.read_pickle('../data_files/ingr_map.pkl')
-
 
 def display_recipes_page():
     """
     Display the recipes page content.
     """
-
+    df_agg = st.session_state.clean_df
+    
     # Get path of the images 
     current_dir = os.path.dirname(__file__)
     images_path = os.path.abspath(os.path.join(current_dir, "..", "images"))
@@ -29,8 +28,16 @@ def display_recipes_page():
     # Section 1 : Ingrédients par saisons
     genre = st.radio(
     "Which period do you want ? ",
-    ["winter", "spring", "summer","autumn"], index=None,)
+    ["winter :snowflake:", "spring :cherry_blossom:", "summer :sunny:","autumn :maple_leaf:"], index=None,)
 
     st.write("You selected :", genre)
+    
+    top_number_ingr = st.text_area("Enter the amount of ingredients to compare (default set to 200):",)
+    unique_ingredients=unique_ingr(df_agg,df_ingr_map,top_number_ingr)
 
-
+    wordcloud_input = {tag: count for tag, count in unique_ingredients.items()}
+    wordcloud = WordCloud(width=800, height=400, background_color='white').generate_from_frequencies(wordcloud_input)
+    fig, ax = plt.subplots()
+    ax.imshow(wordcloud, interpolation="bilinear")
+    ax.axis("off")
+    st.pyplot(fig)

@@ -47,19 +47,19 @@ def test_outliers(outliers_sample):
     used to test outlier detection.
     """
     # Tests values above a given treshold
-    outlier = outliers(outliers_sample, 'A', treshold_sup=30,
+    outlier = outliers_df(outliers_sample, 'A', treshold_sup=30,
                        treshold_inf=None, get_info=False)
     assert isinstance(outlier, list)  # Check result is a list
     assert len(outlier) == 6  # Check the amount of values above the treshold
 
     # Tests values below a given treshold
-    outlier1 = outliers(outliers_sample, 'A', treshold_sup=None,
+    outlier1 = outliers_df(outliers_sample, 'A', treshold_sup=None,
                         treshold_inf=10, get_info=False)
     assert isinstance(outlier1, list)
     assert len(outlier1) == 4
 
     # Tests values between two tresholds and returns info
-    outlier2 = outliers(outliers_sample, 'A', treshold_sup=16,
+    outlier2 = outliers_df(outliers_sample, 'A', treshold_sup=16,
                         treshold_inf=37, get_info=True)
     assert isinstance(outlier2, pd.DataFrame)  # Check result is a dataframe
     assert len(outlier2) == 7  # check values are correctly filtered
