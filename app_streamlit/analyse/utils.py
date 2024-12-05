@@ -10,30 +10,75 @@ def metrics_main_contributor(df):
     num_recipes = df['recipe_id'].nunique()
     return num_contributors, num_recipes
 
-def average_comments_per_contributor(df):
+def average_and_total_comments_per_contributor(df):
     """
-    Calculates the average number of comments per recipe for each contributor.
+    Calculates the average number of comments per recipe and the total number of comments for each contributor.
 
     Parameters:
     - df (pd.DataFrame): A DataFrame containing recipe data, including 'contributor_id' and 'num_comments'.
 
     Returns:
-    - pd.DataFrame: A DataFrame with 'contributor_id' and 'avg_comments_per_recipe'.
+    - pd.DataFrame: A DataFrame with 'contributor_id', 'avg_comments_per_recipe', and 'total_comments',
+      where contributor_id is treated as a category.
     """
     # Vérifier que les colonnes nécessaires existent
     if 'contributor_id' not in df.columns or 'num_comments' not in df.columns:
         raise ValueError("Le DataFrame doit contenir les colonnes 'contributor_id' et 'num_comments'.")
 
-    # Calculer la moyenne des commentaires par contributeur
-    avg_comments = df.groupby('contributor_id')['num_comments'].mean().reset_index()
+    # Convertir contributor_id en chaîne
+    df['contributor_id'] = df['contributor_id'].astype(str)
+
+    # Calculer la moyenne des commentaires et le total des commentaires par contributeur
+    stats = df.groupby('contributor_id')['num_comments'].agg(
+        avg_comments_per_recipe='mean',  # Moyenne des commentaires
+        total_comments='sum'            # Total des commentaires
+    ).reset_index()
 
     # Renommer les colonnes pour plus de clarté
-    avg_comments.columns = ['contributor_id', 'avg_comments_per_recipe']
+    stats.columns = ['contributor_id', 'avg_comments_per_recipe', 'total_comments']
 
     # Trier par moyenne décroissante
-    avg_comments = avg_comments.sort_values(by='avg_comments_per_recipe', ascending=False)
+    stats = stats.sort_values(by='avg_comments_per_recipe', ascending=False)
 
-    return avg_comments
+    return stats
+
+
+def top_commented_recipes_by_contributors(df, top_contributors, max_recipes_per_contributor=5):
+    """
+    Extracts the top commented recipes for each contributor in the top contributors list.
+
+    Parameters:
+    - df (pd.DataFrame): The DataFrame containing recipe data.
+    - top_contributors (pd.DataFrame): A DataFrame containing the IDs of the top contributors.
+    - max_recipes_per_contributor (int): Maximum number of recipes to return per contributor.
+
+    Returns:
+    - pd.DataFrame: A DataFrame containing contributor IDs, recipe IDs, names, and number of comments.
+    """
+    # Vérifier les colonnes nécessaires
+    if not {'contributor_id', 'recipe_id', 'name', 'num_comments'}.issubset(df.columns):
+        raise ValueError("Le DataFrame doit contenir les colonnes 'contributor_id', 'recipe_id', 'name', et 'num_comments'.")
+
+    # Convertir contributor_id en chaîne dans les deux DataFrames
+    df['contributor_id'] = df['contributor_id'].astype(str)
+    top_contributors['contributor_id'] = top_contributors['contributor_id'].astype(str)
+
+    # Filtrer les recettes appartenant aux top contributeurs
+    filtered_df = df[df['contributor_id'].isin(top_contributors['contributor_id'])]
+    
+    # Trier les recettes par nombre de commentaires
+    filtered_df = filtered_df.sort_values(by='num_comments', ascending=False)
+    
+    # Limiter le nombre de recettes par contributeur
+    top_recipes = (
+        filtered_df.groupby('contributor_id')
+        .head(max_recipes_per_contributor)
+        .reset_index(drop=True)
+    )
+    
+    # Sélectionner les colonnes pertinentes
+    return top_recipes[['contributor_id', 'recipe_id', 'name', 'num_comments']]
+
 
 def count_contributors_by_recipe_range_with_bins(df):
     """
@@ -91,6 +136,39 @@ def top_commented_recipes(df, top_n=10):
     result = top_recipes[['contributor_id', 'recipe_id', 'num_comments','name']]
 
     return result
+
+def top_commented_recipes_by_contributors(df, top_contributors, max_recipes_per_contributor=5):
+    """
+    Extracts the top commented recipes for each contributor in the top contributors list.
+
+    Parameters:
+    - df (pd.DataFrame): The DataFrame containing recipe data.
+    - top_contributors (pd.DataFrame): A DataFrame containing the IDs of the top contributors.
+    - max_recipes_per_contributor (int): Maximum number of recipes to return per contributor.
+
+    Returns:
+    - pd.DataFrame: A DataFrame containing contributor IDs, recipe IDs, names, and number of comments.
+    """
+    # Vérifier les colonnes nécessaires
+    if not {'contributor_id', 'recipe_id', 'name', 'num_comments'}.issubset(df.columns):
+        raise ValueError("Le DataFrame doit contenir les colonnes 'contributor_id', 'recipe_id', 'name', et 'num_comments'.")
+    
+    # Filtrer les recettes appartenant aux top contributeurs
+    filtered_df = df[df['contributor_id'].isin(top_contributors['contributor_id'])]
+    
+    # Trier les recettes par nombre de commentaires
+    filtered_df = filtered_df.sort_values(by='num_comments', ascending=False)
+    
+    # Limiter le nombre de recettes par contributeur
+    top_recipes = (
+        filtered_df.groupby('contributor_id')
+        .head(max_recipes_per_contributor)
+        .reset_index(drop=True)
+    )
+    
+    # Sélectionner les colonnes pertinentes
+    return top_recipes[['contributor_id', 'recipe_id', 'name', 'num_comments']]
+
 
 
 def get_top_tags(df, most_commented=False, top_recipes=20, top_n=10):
