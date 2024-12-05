@@ -5,6 +5,7 @@ from load_data.preprocess.add_drop_column import add_columns
 from load_data.preprocess.add_drop_column import drop_columns
 from load_data.preprocess.cleaning_data import outliers_df
 from load_data.preprocess.cleaning_data import date_separated
+from load_data.preprocess.cleaning_data import add_season
 
 
 
@@ -69,4 +70,7 @@ def prepare_final_dataframe(raw_interaction, raw_recipes, pp_recipes):
     df_merged = drop_columns(df_merged, columns_to_drop)
     df_merged = df_aggregate(df_merged)
 
+    # step 6 : add a column for seasons 
+    df_merged=add_season(df_merged)
+    
     return df_merged
