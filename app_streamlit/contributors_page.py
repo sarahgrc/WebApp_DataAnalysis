@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import plotly.express as px
 from wordcloud import WordCloud
 
+
 from analyse.utils import (
     count_contributors_by_recipe_range_with_bins,
     get_top_tags,
@@ -15,7 +16,7 @@ from analyse.utils import (
     average_and_total_comments_per_contributor,
 )
 
-df_ingr_map = pd.read_pickle('./data_files/ingr_map.pkl')
+df_ingr_map = pd.read_pickle("../data_files/ingr_map.pkl")
 
 
 def my_metric(label, value, bg_color, icon="fas fa-asterisk"):

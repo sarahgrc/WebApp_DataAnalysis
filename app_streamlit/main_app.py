@@ -16,9 +16,9 @@ if "logged_in" not in st.session_state:
 if "clean_df" not in st.session_state:
     # Executed only once per session
     st.session_state.clean_df = prepare_final_dataframe(
-        pd.read_csv('./data_files/RAW_interactions.csv'),
-        pd.read_csv('./data_files/RAW_recipes.csv'),
-        pd.read_csv('./data_files/PP_recipes.csv')
+        pd.read_csv('../data_files/RAW_interactions.csv'),
+        pd.read_csv('../data_files/RAW_recipes.csv'),
+        pd.read_csv('../data_files/PP_recipes.csv')
     ).head(1000)
 
 # Define the main function
