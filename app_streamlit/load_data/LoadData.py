@@ -55,4 +55,3 @@ class DataFrameLoadder():
             print(' -- UNEXPECTED ERROR --- : ', e)
 
         return self.df
-

@@ -1,174 +1,171 @@
+"""This page is dedicated to the page contributor on streamlit, all graphs rely on the contributors' performances
+"""
+
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
-import matplotlib.cm as cm
-import numpy as np
-import seaborn as sns
+import plotly.express as px
 from wordcloud import WordCloud
-import matplotlib.pyplot as plt
-from analyse.utils import count_contributors_by_recipe_range_with_bins
-from analyse.utils import get_top_tags
-from analyse.utils import get_top_ingredients2
-from analyse.utils import top_commented_recipes
-from analyse.utils import metrics_main_contributor
-from analyse.utils import top_contributors_by_recipes
 
-df_ingr_map = pd.read_pickle(r"C:\Users\Lily\Documents\WebApp_DataAnalysis\data_files\ingr_map.pkl")
+
+from analyse.utils import (
+    count_contributors_by_recipe_range_with_bins,
+    get_top_tags,
+    get_top_ingredients2,
+    metrics_main_contributor,
+    average_and_total_comments_per_contributor,
+)
+
+df_ingr_map = pd.read_pickle("../data_files/ingr_map.pkl")
+
 
 def my_metric(label, value, bg_color, icon="fas fa-asterisk"):
     fontsize = 18
-    lnk = '<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.12.1/css/all.css" crossorigin="anonymous">'
+    lnk = (
+        '<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.12.1/css/all.css" '
+        'crossorigin="anonymous">'
+    )
     bg_color_css = f'rgb({bg_color[0]}, {bg_color[1]}, {bg_color[2]}, 0.75)'
 
-    htmlstr = f"""<p style='background-color: {bg_color_css}; 
-                            font-size: {fontsize}px; 
-                            border-radius: 7px; 
-                            padding-left: 12px; 
-                            padding-top: 18px; 
-                            padding-bottom: 18px; 
-                            line-height:25px;'>
-                            <i class='{icon} fa-xs'></i> {value}
-                            </style><BR><b><span style='font-size: 15px; 
-                            margin-top: 0;'>{label}</b></style></span></p>"""
+    htmlstr = f"""
+    <p style='background-color: {bg_color_css};
+               font-size: {fontsize}px;
+               border-radius: 7px;
+               padding-left: 12px;
+               padding-top: 18px;
+               padding-bottom: 18px;
+               line-height:25px;'>
+               <i class='{icon} fa-xs'></i> {value}
+               </style><BR><b><span style='font-size: 15px;
+               margin-top: 0;'>{label}</b></style></span></p>
+    """
 
     st.markdown(lnk + htmlstr, unsafe_allow_html=True)
 
 
-def display_contributors_page():
-    df_agg = st.session_state.clean_df
-
-    st.sidebar.markdown('<h1 style="color:orange;" font-size:24px;">Pick the granularity</h1>', unsafe_allow_html=True)
-    
-    selected_option = st.sidebar.radio(
-        "Select Analysis",
-        ("Global contributor's overview", "Focus on a specific contributor"),
-        key="analysis_option"
+def display_contributors_page(df):
+    st.sidebar.markdown(
+        '<h1 style="color:orange;" font-size:24px;">Analysis Menu</h1>',
+        unsafe_allow_html=True,
+    )
+    selected_page = st.sidebar.radio(
+        "Select a page:",
+        ("Overview", "Focus Contributor"),
+        format_func=lambda x: f"\U0001F50D {x}" if x == "Focus Contributor" else f"\U0001F4CA {x}",
+        key="selected_page",
     )
 
-    if selected_option == "Global contributor's overview":
-        st.markdown('<p style="color:orange; font-weight:bold; font-size:35px;">Global contributor\'s overview</p>', unsafe_allow_html=True)
-        st.write("There is an overview to better understand what makes a good contributor, to make you a better contributor.")
+    #section 1 : Graph for overview page
+    if selected_page == "Overview":
+        st.markdown(
+            '<h1 style="color:orange; font-weight:bold; font-size:32px;">General Overview</h1>',
+            unsafe_allow_html=True,
+        )
 
-        # Section 1:main metrics
-        num_contributors, num_recipes = metrics_main_contributor(df_agg)
-        orange1 = (255, 240, 186)
-        orange2 = (255, 204, 153)
-        icon_contributors = "fas fa-users"
-        icon_recipes = "fas fa-utensils"
-
+        #section 1.1 : main metrics
+        num_contributors, num_recipes = metrics_main_contributor(df)
         col1, col2 = st.columns(2)
         with col1:
-            my_metric("Number of Contributors", num_contributors, orange1, icon_contributors)
+            my_metric("Number of Contributors", num_contributors, (255, 240, 186), "fas fa-users")
         with col2:
-            my_metric("Number of Recipes", num_recipes, orange2, icon_recipes)
+            my_metric("Number of Recipes", num_recipes, (255, 204, 153), "fas fa-utensils")
 
-       # Section 1: pie chart
-        st.subheader("Distribution of contributors by number of recipes")
-        recipe_bins = count_contributors_by_recipe_range_with_bins(df_agg)
-
-        cmap = cm.get_cmap("Oranges", len(recipe_bins))  # Palette "Oranges"
-        colors = [cmap(i) for i in range(len(recipe_bins))]
-
-        def round_autopct(pct):
-            return '{:.0f}%'.format(pct) if pct > 0 else ''
-
-        # donuts creation
-        fig, ax = plt.subplots(figsize=(2, 2))
-        ax.pie(
-            recipe_bins.values,
-            labels=recipe_bins.index,
-            autopct=round_autopct,
-            startangle=90,
-            colors=colors,
-            textprops={'fontsize': 5},
-            labeldistance=1.1,
-            wedgeprops={'linewidth': 1, 'edgecolor': 'white'}
+        st.markdown(
+            '<h3 style="color:black; font-size:20px; font-weight:normal;">'
+            'Contributors by Recipe Range (Pie Chart)</h3>',
+            unsafe_allow_html=True,
         )
 
-        centre_circle = plt.Circle((0, 0), 0.70, fc='white')
-        fig.gca().add_artist(centre_circle)
-        st.pyplot(fig)
+        #section 1.2: pie chart contributeurs & number of recipes
+        recipe_bins = count_contributors_by_recipe_range_with_bins(df)
+        df_plot = recipe_bins.reset_index()
+        df_plot.columns = ["Recipe Range", "Contributors"]
 
-        # Section 2: Top Contributors
-        top_n = st.selectbox("Select the number of top recipes to display:", [3, 5, 10, 15])
-        st.subheader(f"Best {top_n} Commented Recipes")
-        top_recipes = top_commented_recipes(df_agg, top_n=top_n)
+        fig_pie = px.pie(
+            df_plot,
+            names="Recipe Range",
+            values="Contributors",
+            color="Recipe Range",
+            color_discrete_sequence=px.colors.sequential.Oranges,
+        )
+        fig_pie.update_traces(textposition="inside", textinfo="percent+label")
+        st.plotly_chart(fig_pie, use_container_width=True)
 
-        # graphic
-        fig, ax = plt.subplots(figsize=(8, 5))
-        y_positions = range(len(top_recipes))
-        bars = ax.barh(
-            y_positions, 
-            top_recipes['num_comments'], 
-            color='#FFA500',
-            height=0.8
+    #section 2 : Focus contributor
+    elif selected_page == "Focus Contributor":
+        st.markdown(
+            '<h1 style="color:orange; font-weight:bold; font-size:32px;">Focus Contributor Analysis</h1>',
+            unsafe_allow_html=True,
         )
 
-        # labels
-        for bar, contributor, recipe in zip(bars, top_recipes['contributor_id'], top_recipes['recipe_id']):
-            width = bar.get_width()
-            ax.text(
-                width + 2, 
-                bar.get_y() + bar.get_height() / 2,  
-                f'ID: {contributor}',
-                va='center',
-                fontsize=9
-            )
+        filter_option = st.radio(
+            "Filter by:",
+            ("All Contributors", "Top Contributors", "Most Viewed Recipes"),
+            key="filter_option",
+        )
+        #section 2.1 : filter to display what granularity we want
+        if filter_option == "Top Contributors":
+            top_n = st.slider("Select number of top contributors:", 1, 10, 5)
+            avg_comments_df = average_and_total_comments_per_contributor(df)
+            top_contributors = avg_comments_df.nlargest(top_n, "avg_comments_per_recipe")
+            filtered_df = df[df["contributor_id"].isin(top_contributors["contributor_id"])]
+        elif filter_option == "Most Viewed Recipes":
+            filtered_df = df.sort_values(by="num_comments", ascending=False).head(100)
+        else:
+            filtered_df = df
 
-        #  `recipe_id`
-        ax.set_yticks(y_positions)
-        ax.set_yticklabels(top_recipes['recipe_id'], fontsize=10)
-        ax.set_xlabel("Number of Comments", fontsize=12)
-        ax.invert_yaxis()  # Inverser pour que le top 1 soit en haut
-        ax.spines['top'].set_visible(False)
-        ax.spines['right'].set_visible(False)
+        st.markdown(
+            '<h2 style="color:black; font-size:22px; font-weight:normal;">Top Tags</h2>',
+            unsafe_allow_html=True,
+        )
+        #section 2.2 : Top tag used
+        top_n_tags = st.slider("Number of tags to display:", min_value=5, max_value=50, value=10)
+        tags = get_top_tags(filtered_df, most_commented=False, top_recipes=20, top_n=top_n_tags)
 
-        st.pyplot(fig)
+        if tags.empty:
+            st.warning("No tags found in the selected data.")
+        else:
+            wordcloud = WordCloud(
+                width=800, height=400, background_color='white', colormap='Oranges'
+            ).generate_from_frequencies(tags)
+            fig, ax = plt.subplots(figsize=(10, 6))
+            ax.imshow(wordcloud, interpolation="bilinear")
+            ax.axis("off")
+            st.pyplot(fig)
 
-
-        # Section 3: Top Tags
-        st.subheader("What are the best tags ?")
-        most_commented = st.checkbox("Only most commented recipes", value=False, key="most_commented_checkbox")
-        top_n_recipes = st.number_input("How many recipes do you want to analyze:", min_value=1, value=20, step=1, key="num_recipes")
-        top_n_tags = st.slider("How many tags you want to display", min_value=5, max_value=50, value=20, key="slider_top_n_tags")
-        tags = get_top_tags(df_agg, most_commented=most_commented, top_recipes=top_n_recipes, top_n=top_n_tags)
-        wordcloud_input = {tag: count for tag, count in tags.items()}
-        wordcloud = WordCloud(width=800, height=400, background_color='white').generate_from_frequencies(wordcloud_input)
-        fig, ax = plt.subplots()
-        ax.imshow(wordcloud, interpolation="bilinear")
-        ax.axis("off")
-        st.pyplot(fig)
-
-        # Section 4: Top Ingredients
-        st.subheader("Top Ingredients")
+        #section 2.3 : Top ingredients to display 
+        st.markdown(
+            '<h2 style="color:black; font-size:22px; font-weight:normal;">Top Ingredients</h2>',
+            unsafe_allow_html=True,
+        )
+        default_excluded = [
+            'black pepper', 'vegetable oil', 'salt', 'pepper', 'olive oil', 'oil',
+            'butter', 'water', 'sugar', 'flour', 'brown sugar', 'salt and pepper',
+            'scallion', 'baking powder', 'garlic', 'flmy', 'garlic clove',
+            'all-purpose flmy', 'baking soda', 'ice cube',
+        ]
+        user_excluded = st.text_area(
+            "Exclude ingredients (comma-separated):",
+            ", ".join(default_excluded),
+            height=100,
+        )
         
-        default_excluded = ['black pepper', 'vegetable oil', 'salt', 'pepper', 'olive oil', 'oil',
-                            'butter', 'water', 'sugar', 'flour', 'brown sugar', 'salt and pepper',
-                            'scallion', 'baking powder', 'garlic', 'flmy', 'garlic clove',
-                            'all-purpose flmy', 'baking soda']
-        user_excluded = st.text_area("Enter ingredients to exclude, separated by commas:", ", ".join(default_excluded))
         excluded_ingredients = set(map(str.strip, user_excluded.split(",")))
-        top_n_ingredients = st.number_input("Select the number of top ingredients to display:", min_value=1, value=10, step=1, key="number_top_ingredients")
-        top_ingredients = get_top_ingredients2(df_agg, df_ingr_map, excluded_ingredients, top_n_ingredients)
 
-        fig, ax = plt.subplots(figsize=(10, 6))
-        sns.barplot(data=top_ingredients.reset_index(), x='mapped_ingredients', y='count', ax=ax, color='orange')
-        ax.set_ylabel('Number of occurencies')
-        ax.set_xticklabels(ax.get_xticklabels(), rotation=45, ha='right')
-        ax.spines['top'].set_visible(False)
-        ax.spines['right'].set_visible(False)
-        ax.spines['left'].set_visible(False)
-        st.pyplot(fig)
+        top_n_ingredients = st.slider("Number of ingredients to display:", min_value=5, max_value=50, value=10)
+        top_ingredients = get_top_ingredients2(filtered_df, df_ingr_map, excluded_ingredients, top_n_ingredients)
 
-
-    elif selected_option == "Focus on a specific contributor":
-        st.markdown('<p style="color:orange; font-weight:bold; font-size:35px;">Focus on a specific contributor</p>', unsafe_allow_html=True)
-        
-        #section 1 
-        st.subheader("Distribution des recettes par contributeur")
-        recipe_bins = top_contributors_by_recipes(df_agg, top_n=10)
-        st.bar_chart(recipe_bins)
-
-
-    else:
-        st.info("Sélectionnez une analyse à afficher dans la barre latérale.")
+        if top_ingredients.empty:
+            st.warning("No ingredients found in the selected data.")
+        else:
+            fig_ingr = px.bar(
+                top_ingredients.reset_index(),
+                x="count",
+                y="mapped_ingredients",
+                orientation="h",
+                labels={"count": "Occurrences", "mapped_ingredients": "Ingredient"},
+                color="count",
+                color_continuous_scale="Oranges",
+            )
+            fig_ingr.update_layout(template="simple_white")
+            st.plotly_chart(fig_ingr, use_container_width=True)

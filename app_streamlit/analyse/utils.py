@@ -19,6 +19,76 @@ def metrics_main_contributor(df):
 
 def average_and_total_comments_per_contributor(df):
     """
+    Calculates the average number of comments per recipe and the total number of comments for each contributor.
+
+    Parameters:
+    - df (pd.DataFrame): A DataFrame containing recipe data, including 'contributor_id' and 'num_comments'.
+
+    Returns:
+    - pd.DataFrame: A DataFrame with 'contributor_id', 'avg_comments_per_recipe', and 'total_comments',
+      where contributor_id is treated as a category.
+    """
+    # Vérifier que les colonnes nécessaires existent
+    if 'contributor_id' not in df.columns or 'num_comments' not in df.columns:
+        raise ValueError("Le DataFrame doit contenir les colonnes 'contributor_id' et 'num_comments'.")
+
+    # Convertir contributor_id en chaîne
+    df['contributor_id'] = df['contributor_id'].astype(str)
+
+    # Calculer la moyenne des commentaires et le total des commentaires par contributeur
+    stats = df.groupby('contributor_id')['num_comments'].agg(
+        avg_comments_per_recipe='mean',  # Moyenne des commentaires
+        total_comments='sum'            # Total des commentaires
+    ).reset_index()
+
+    # Renommer les colonnes pour plus de clarté
+    stats.columns = ['contributor_id', 'avg_comments_per_recipe', 'total_comments']
+
+    # Trier par moyenne décroissante
+    stats = stats.sort_values(by='avg_comments_per_recipe', ascending=False)
+
+    return stats
+
+
+def top_commented_recipes_by_contributors(df, top_contributors, max_recipes_per_contributor=5):
+    """
+    Extracts the top commented recipes for each contributor in the top contributors list.
+
+    Parameters:
+    - df (pd.DataFrame): The DataFrame containing recipe data.
+    - top_contributors (pd.DataFrame): A DataFrame containing the IDs of the top contributors.
+    - max_recipes_per_contributor (int): Maximum number of recipes to return per contributor.
+
+    Returns:
+    - pd.DataFrame: A DataFrame containing contributor IDs, recipe IDs, names, and number of comments.
+    """
+    # Vérifier les colonnes nécessaires
+    if not {'contributor_id', 'recipe_id', 'name', 'num_comments'}.issubset(df.columns):
+        raise ValueError("Le DataFrame doit contenir les colonnes 'contributor_id', 'recipe_id', 'name', et 'num_comments'.")
+
+    # Convertir contributor_id en chaîne dans les deux DataFrames
+    df['contributor_id'] = df['contributor_id'].astype(str)
+    top_contributors['contributor_id'] = top_contributors['contributor_id'].astype(str)
+
+    # Filtrer les recettes appartenant aux top contributeurs
+    filtered_df = df[df['contributor_id'].isin(top_contributors['contributor_id'])]
+    
+    # Trier les recettes par nombre de commentaires
+    filtered_df = filtered_df.sort_values(by='num_comments', ascending=False)
+    
+    # Limiter le nombre de recettes par contributeur
+    top_recipes = (
+        filtered_df.groupby('contributor_id')
+        .head(max_recipes_per_contributor)
+        .reset_index(drop=True)
+    )
+    
+    # Sélectionner les colonnes pertinentes
+    return top_recipes[['contributor_id', 'recipe_id', 'name', 'num_comments']]
+
+
+def count_contributors_by_recipe_range_with_bins(df):
+    """
     Calculate the average and total number of comments per contributor.
 
     Args:
@@ -62,6 +132,7 @@ def top_commented_recipes_by_contributors(df, top_contributors, max_recipes_per_
     filtered_df = df[df['contributor_id'].isin(top_contributors['contributor_id'])]
     filtered_df = filtered_df.sort_values(by='num_comments', ascending=False)
 
+
     top_recipes = (
         filtered_df.groupby('contributor_id')
         .head(max_recipes_per_contributor)
@@ -69,6 +140,46 @@ def top_commented_recipes_by_contributors(df, top_contributors, max_recipes_per_
     )
 
     return top_recipes[['contributor_id', 'recipe_id', 'name', 'num_comments']]
+
+    # Garder uniquement les colonnes 'contributor_id', 'recipe_id' et 'num_comments'
+    result = top_recipes[['contributor_id', 'recipe_id', 'num_comments','name']]
+
+    return result
+
+def top_commented_recipes_by_contributors(df, top_contributors, max_recipes_per_contributor=5):
+    """
+    Extracts the top commented recipes for each contributor in the top contributors list.
+
+    Parameters:
+    - df (pd.DataFrame): The DataFrame containing recipe data.
+    - top_contributors (pd.DataFrame): A DataFrame containing the IDs of the top contributors.
+    - max_recipes_per_contributor (int): Maximum number of recipes to return per contributor.
+
+    Returns:
+    - pd.DataFrame: A DataFrame containing contributor IDs, recipe IDs, names, and number of comments.
+    """
+    # Vérifier les colonnes nécessaires
+    if not {'contributor_id', 'recipe_id', 'name', 'num_comments'}.issubset(df.columns):
+        raise ValueError("Le DataFrame doit contenir les colonnes 'contributor_id', 'recipe_id', 'name', et 'num_comments'.")
+    
+    # Filtrer les recettes appartenant aux top contributeurs
+    filtered_df = df[df['contributor_id'].isin(top_contributors['contributor_id'])]
+    
+    # Trier les recettes par nombre de commentaires
+    filtered_df = filtered_df.sort_values(by='num_comments', ascending=False)
+    
+    # Limiter le nombre de recettes par contributeur
+    top_recipes = (
+        filtered_df.groupby('contributor_id')
+        .head(max_recipes_per_contributor)
+        .reset_index(drop=True)
+    )
+    
+    # Sélectionner les colonnes pertinentes
+    return top_recipes[['contributor_id', 'recipe_id', 'name', 'num_comments']]
+
+
+
 
 def count_contributors_by_recipe_range_with_bins(df):
     """
@@ -163,11 +274,92 @@ def get_top_ingredients2(df, df_ingr_map, excluded_ingredients=None, top_n=10):
         .head(top_n)
     )
 
+
     return filtered_ingredients
 
 def count_recipes_season(df):
     """
     Count recipes per season.
+
+    return filtered_ingredient_counts
+
+def trendy_ingredients_by_seasons(df,ingr_map,top_n):
+    """
+    This function create a dataframe for each seasons and returns the top 200 ingredients used
+
+    Args:
+        df (dataframe): dataframe cleaned 
+        ingr_map (dataFrame): dataFrame mapping ingredient IDs ('id') to their names ('replaced')
+        top_n (int, optional): number of top ingredients to return. Defaults to 200.
+    
+    Returns:
+        winter_ingr,spring_ingr,summer_ingr,autumn_ingr (pd.series) : four pd.series with the top 200 ingredients used
+    """
+    # Create dataFrames for each season
+    winter= df[df['season']=='winter']
+    spring=df[df['season']=='spring']
+    summer=df[df['season']=='summer']
+    autumn=df[df['season']=='autumn']
+
+    # Get the top 200 ingredients for each season
+    winter_ingr=get_top_ingredients2(winter, ingr_map, excluded_ingredients=None, top_n=top_n)
+    spring_ingr=get_top_ingredients2(spring, ingr_map, excluded_ingredients=None, top_n=top_n)
+    summer_ingr=get_top_ingredients2(summer, ingr_map, excluded_ingredients=None, top_n=top_n)
+    autumn_ingr=get_top_ingredients2(autumn, ingr_map, excluded_ingredients=None, top_n=top_n)
+
+    return winter_ingr,spring_ingr,summer_ingr,autumn_ingr
+
+def unique_ingr(df,ingr_map,top_n=200):
+    """
+    This function return the unique ingredients used during each season by comparing all the ingredients used in
+    one season to all the other seasons. 
+
+    Args:
+        df (dataframe): dataframe cleaned 
+        ingr_map (dataFrame): dataFrame mapping ingredient IDs ('id') to their names ('replaced')
+        top_n (int, optional): number of top ingredients to return. Defaults to 200.
+
+    Returns:
+        winter_unique,spring_unique,summer_unique,autumn_unique (list): return a list for each season of unique ingredients 
+    """
+
+    winter_ingr,spring_ingr,summer_ingr,autumn_ingr=trendy_ingredients_by_seasons(df,ingr_map,top_n)
+    # Initialize empty lists to store unique ingredient for each season
+    winter_unique=[]
+    spring_unique=[]
+    summer_unique=[]
+    autumn_unique=[]
+
+    # For each season, identify unique index 
+    for i in winter_ingr.index:
+        if i not in spring_ingr.index and i not in summer_ingr.index and i not in autumn_ingr.index : 
+            winter_unique.append(i)
+    for i in spring_ingr.index:
+        if i not in winter_ingr.index and i not in summer_ingr.index and i not in autumn_ingr.index : 
+            spring_unique.append(i)
+    for i in summer_ingr.index:
+        if i not in winter_ingr.index and i not in spring_ingr.index and i not in autumn_ingr.index : 
+            summer_unique.append(i)
+    for i in autumn_ingr.index:
+        if i not in winter_ingr.index and i not in summer_ingr.index and i not in spring_ingr.index : 
+            autumn_unique.append(i)
+
+    # Return unique indices for each season as a list
+    return winter_unique,spring_unique,summer_unique,autumn_unique
+  
+def count_recipes_season(df):
+    """ Count recipes per season """
+    # count recipes per season
+    recipe_per_season = {'winter': len(df[df['season'] == 'winter']),
+                         'spring': len(df[df['season'] == 'spring']),
+                         'summer': len(df[df['season'] == 'summer']),
+                         'autumn': len(df[df['season'] == 'autumn'])}
+
+    return recipe_per_season
+
+def user_recipes(merged_df, user_id):
+    """Finds the recipes published by the user
+
 
     Args:
         df (pd.DataFrame): DataFrame with recipe data and a 'season' column.
