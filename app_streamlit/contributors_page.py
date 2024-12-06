@@ -69,15 +69,6 @@ def display_contributors_page(df):
         key="selected_page",
     )
 
-
-    selected_page = st.sidebar.radio(
-        "Select a page:",
-        ("Overview", "Focus Contributor"),
-        format_func=lambda x: f"\U0001F50D {x}" if x == "Focus Contributor" else f"\U0001F4CA {x}",
-        key="selected_page",
-    )
-
-
     #section 1 : Graph for overview page
     if selected_page == "Overview":
         st.markdown(
