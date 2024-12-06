@@ -5,6 +5,8 @@ import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 import plotly.express as px
+import os
+
 from wordcloud import WordCloud
 
 
@@ -17,6 +19,7 @@ from analyse.utils import (
 )
 
 df_ingr_map = pd.read_pickle("../data_files/ingr_map.pkl")
+
 
 
 def my_metric(label, value, bg_color, icon="fas fa-asterisk"):
@@ -48,12 +51,32 @@ def display_contributors_page(df):
         '<h1 style="color:orange;" font-size:24px;">Analysis Menu</h1>',
         unsafe_allow_html=True,
     )
+
+    current_dir = os.path.dirname(__file__)
+    images_path = os.path.abspath(os.path.join(current_dir, "..", "images"))
+    img_1_path =os.path.join(images_path, "raw-ingredient.png")
+
+    st.markdown('<p style="color:orange; font-weight:bold; font-size:35px;">Global analysis of recipes</p>', unsafe_allow_html=True)
+    st.write("Here, you will find analyses that will allow you to see who the contributors "
+             "with the most commented recipes are and what their specificities are (tags, ingredients).")
+
+    st.image(img_1_path)
+
     selected_page = st.sidebar.radio(
         "Select a page:",
         ("Overview", "Focus Contributor"),
         format_func=lambda x: f"\U0001F50D {x}" if x == "Focus Contributor" else f"\U0001F4CA {x}",
         key="selected_page",
     )
+
+
+    selected_page = st.sidebar.radio(
+        "Select a page:",
+        ("Overview", "Focus Contributor"),
+        format_func=lambda x: f"\U0001F50D {x}" if x == "Focus Contributor" else f"\U0001F4CA {x}",
+        key="selected_page",
+    )
+
 
     #section 1 : Graph for overview page
     if selected_page == "Overview":
