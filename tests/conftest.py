@@ -1,12 +1,13 @@
 """
 This file contains unit tests and fixtures used with pytest
 to test data analysis, cleaning, and manipulation features. The tests cover several cases, such as data cleaning,
-outlier handling, and merging DataFrames.
+outlier handling, and merging DataFrames. 
 """
 
 import pandas as pd
 import numpy as np
 import pytest
+
 
 @pytest.fixture
 def sample_raw_recipes():
@@ -56,56 +57,6 @@ def merged_sample():
     return df1, df2
 
 @pytest.fixture
-def sample_data():
-    """
-    Provides sample data for testing functions in the utilzs module.
-
-    This data simulates a recipe dataset with contributors, recipes, tags, reviews, 
-    and ingredient IDs to support testing of various functionalities.
-
-    Returns:
-        pd.DataFrame: A DataFrame containing sample data with the following columns:
-            - 'contributor_id' (int): IDs of contributors who created the recipes.
-            - 'recipe_id' (int): Unique IDs of the recipes.
-            - 'tags' (str): Tags associated with each recipe in JSON-like string format.
-            - 'review' (str): Reviews or comments on the recipes (can be None).
-            - 'ingredient_ids' (str): IDs of ingredients used in each recipe in JSON-like string format.
-    """
-    data = {
-        'contributor_id': [1, 2, 1, 3, 2, 4, 5, 5, 5, 6],
-        'recipe_id': [101, 102, 103, 104, 105, 106, 107, 108, 109, 110],
-        'tags': ['["vegan", "healthy"]', '["quick", "easy"]', '["vegan"]',
-                 '["healthy", "low-fat"]', '["easy"]', '["quick"]',
-                 '["vegan", "gluten-free"]', '["healthy"]', '["low-fat"]', '["quick"]'],
-        'review': [None, 'Great recipe!', 'Loved it!', None, 'Too salty', None, 'Perfect!', 'Not bad', None, 'Amazing'],
-        'ingredient_ids': ['[1, 2, 3]', '[4, 5]', '[1, 3]', '[6]', '[2, 7]', '[8]', '[9]', '[10]', '[11]', '[12]']
-    }
-    return pd.DataFrame(data)
-
-
-@pytest.fixture
-def ingredient_mapping():   
-    """
-    Provides a sample DataFrame for ingredient mapping.
-
-    This fixture returns a mapping of ingredient IDs to their corresponding 
-    simplified names, which can be used for testing ingredient-related functions.
-
-    Returns:
-        pd.DataFrame: A DataFrame with the following columns:
-            - 'id' (int): Unique IDs representing individual ingredients.
-            - 'replaced' (str): Simplified names of the corresponding ingredients.
-    """
-    data = {
-        'id': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
-        'replaced': [
-            'onion', 'garlic', 'pepper', 'tomato', 'salt', 'olive oil', 'butter',
-            'flour', 'sugar', 'milk', 'egg', 'yeast'
-        ]
-    }
-    return pd.DataFrame(data)
-
-@pytest.fixture
 def normalisation_data():
     """
     Provides a sample DataFrame for testing the `normalisation` function.
@@ -118,7 +69,6 @@ def normalisation_data():
             - 'value' (int): A numeric column with sample values to normalize.
     """
     return pd.DataFrame({'value': [10, 20, 30]})
-
 
 @pytest.fixture
 def column_merge_data():
@@ -141,3 +91,31 @@ def column_merge_data():
     df_target = pd.DataFrame({'key': [1, 2, 3], 'value': ['A', 'B', 'C']})
     df_source = pd.DataFrame({'key': [1, 2, 4], 'extra': ['X', 'Y', 'Z']})
     return df_target, df_source
+
+@pytest.fixture
+def outliers_sample():
+    """
+    Fixture that generates a sample of data to test
+    outlier handling.
+
+    The generated DataFrame contains two numeric columns with
+    incremental values to simulate different data ranges.
+
+    Returns:
+    df (DataFrame): A DataFrame containing two columns 'A' and 'B'
+    with incremental values.
+    """
+    df = pd.DataFrame({'A': np.arange(0, 50, 3), 'B': np.arange(20, 70, 3)})
+    return df
+
+@pytest.fixture
+def sample_date_data():
+    """
+    Fixture qui crée un DataFrame contenant une colonne 'submitted' avec des dates pour tester la fonction 'date_separated'.
+    """
+    data = {
+        'recipe_id': [1, 2, 3, 4, 5],
+        'name': ['Recipe A', 'Recipe B', 'Recipe C', 'Recipe D', 'Recipe E'],
+        'submitted': ['2023-01-01', '2023-02-15', '2023-03-20', '2023-04-10', '2023-05-05'],
+    }
+    return pd.DataFrame(data)
