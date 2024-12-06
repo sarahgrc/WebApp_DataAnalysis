@@ -7,7 +7,7 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.12"
-
+pandas = "^x.y.z"
 
 [build-system]
 requires = ["poetry-core"]
