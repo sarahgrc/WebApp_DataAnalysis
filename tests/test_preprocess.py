@@ -3,8 +3,7 @@ from app_streamlit.load_data.preprocess.merging import *
 from tests.conftest import sample_raw_recipes
 from app_streamlit.load_data.preprocess.normalisation import *
 from app_streamlit.load_data.preprocess.add_drop_column import *
-from app_streamlit.analyse.utils import outliers
-
+from app_streamlit.load_data.preprocess.cleaning_data import outliers_df
 
 def test_date_separated(sample_raw_recipes):
     """
@@ -35,35 +34,29 @@ def test_date_separated(sample_raw_recipes):
     assert len(d.columns) == len(sample_raw_recipes.columns) + 3
 
 
-def test_outliers(outliers_sample):
+def test_outliers_df(outliers_sample):
     """
-    Tests the 'outliers' function to detect and extract outliers
-    in a sample DataFrame.
-
-    Verifies that outlier detection works above and below
-    the given thresholds, and that information is returned in the requested mode.
-
-    Args:
-    outliers_sample (DataFrame): A DataFrame containing numeric columns
-    used to test outlier detection.
+    Test the outliers_df function to detect and extract outliers
+    based on specified thresholds.
     """
-    # Tests values above a given treshold
-    outlier = outliers(outliers_sample, 'A', treshold_sup=30,
-                       treshold_inf=None, get_info=False)
-    assert isinstance(outlier, list)  # Check result is a list
-    assert len(outlier) == 6  # Check the amount of values above the treshold
+    # Test with treshold_sup only
+    outliers = outliers_df(outliers_sample, column='A', treshold_sup=30, get_info=False)
+    assert isinstance(outliers, list)
+    assert len(outliers) == 6  # Check number of outliers
+    assert all(value > 30 for value in outliers)
 
-    # Tests values below a given treshold
-    outlier1 = outliers(outliers_sample, 'A', treshold_sup=None,
-                        treshold_inf=10, get_info=False)
-    assert isinstance(outlier1, list)
-    assert len(outlier1) == 4
+    # Test with treshold_inf only
+    outliers = outliers_df(outliers_sample, column='A', treshold_inf=10, get_info=False)
+    assert isinstance(outliers, list)
+    assert len(outliers) == 4  # Check number of outliers
+    assert all(value < 10 for value in outliers)
 
-    # Tests values between two tresholds and returns info
-    outlier2 = outliers(outliers_sample, 'A', treshold_sup=16,
-                        treshold_inf=37, get_info=True)
-    assert isinstance(outlier2, pd.DataFrame)  # Check result is a dataframe
-    assert len(outlier2) == 7  # check values are correctly filtered
+    # Test with both treshold_sup and treshold_inf
+    outliers_info = outliers_df(outliers_sample, column='A', treshold_sup=10, treshold_inf=30, get_info=True)
+    assert isinstance(outliers_info, pd.DataFrame)
+    assert len(outliers_info) == 6  # Check filtered rows
+    assert all(outliers_info['A'].between(10, 30, inclusive='neither'))
+
 
 
 def test_df_merged(merged_sample):
