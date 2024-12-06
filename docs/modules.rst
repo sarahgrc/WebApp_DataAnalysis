@@ -5,5 +5,4 @@ WebApp_DataAnalysis
    :maxdepth: 4
 
    app_streamlit
-   sample
    tests
