@@ -1,5 +1,5 @@
-    """functions used for statistics
-    """
+"""functions used for statistics"""
+
 import ast
 import pandas as pd
 
