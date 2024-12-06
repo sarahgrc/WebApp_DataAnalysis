@@ -1,5 +1,6 @@
 from app_streamlit.analyse.utils import *
 
+
 def test_count_contributors_by_recipe_range_with_bins(sample_data):
     """Test the distribution of contributors based on the number of recipes contributed.
 
@@ -90,3 +91,54 @@ def test_get_top_ingredients(sample_data, ingredient_mapping):
     result = get_top_ingredients(sample_data, ingredient_mapping, excluded_ingredients={'salt'}, top_n=3)
     assert len(result) == 3
     assert 'onion' in result.index
+
+def test_user_recipes(recipes_table):
+    # Get recipes for the specific user
+    user_recipes_df = user_recipes(recipes_table, 47892)
+
+    # Check the 'name' column contains the correct recipe names
+    assert list(user_recipes_df['name']) == ["Recipe1", "Recipe2"]  # Ensure names match exactly
+
+
+# Test for the top_recipes_user function
+def test_top_recipes_user(top_recipes_data):
+    user_id = 1  # User to test
+    
+    # Call the top_recipes_user function with the sample DataFrame
+    top_results_by_user = top_recipes_user(top_recipes_data)
+    
+    # Check the structure of the output
+    assert isinstance(top_results_by_user, pd.DataFrame), "The result should be a DataFrame"
+    assert 'Recipe' in top_results_by_user.columns, "The DataFrame should contain a 'Recipe' column"
+    assert 'Number of comments' in top_results_by_user.columns, "The DataFrame should contain a 'Number of comments' column"
+    
+    # Check that the returned recipes are correct"
+    assert top_results_by_user.iloc[0]['Recipe'] == 'Recipe A', "The first recipe should be 'Recipe A'"
+    assert top_results_by_user.iloc[1]['Recipe'] == 'Recipe B', "The second recipe should be 'Recipe B'"
+    
+    # Check the number of comments
+    assert top_results_by_user.iloc[0]['Number of comments'] == 3, "Recipe A should have 3 comments"
+    
+    # Check if the function returns at most the top 5 recipes (even though here we have less)
+    assert top_results_by_user.shape[0] <= 5, "There should not be more than 5 recipes returned"
+
+    top_results = top_recipes(top_recipes_data)
+
+    # Check the structure of the output
+    assert isinstance(top_results, pd.DataFrame), "The result should be a DataFrame"
+    assert 'Recipe' in top_results.columns, "The DataFrame should contain a 'Recipe' column"
+    assert 'Number of comments' in top_results.columns, "The DataFrame should contain a 'Number of comments' column"
+    assert 'Mean Rating' in top_results.columns, "The DataFrame should contain a 'Mean Rating' column"
+
+    # Check that the returned recipes are correct"
+    assert top_results.iloc[0]['Recipe'] == 'Recipe A', "The first recipe should be 'Recipe A'"
+    assert top_results.iloc[1]['Recipe'] == 'Recipe B', "The second recipe should be 'Recipe B'"
+
+    # Check the number of comments
+    assert top_results.iloc[0]['Number of comments'] == 3, "Recipe A should have 3 comments" 
+
+    # Check if the function returns at most the top 5 recipes (even though here we have less)
+    assert top_results.shape[0] <= 5, "There should not be more than 5 recipes returned"
+
+def test_nutri_score(nutriments_data):
+    assert nutri_score(nutriments_data) == "A"

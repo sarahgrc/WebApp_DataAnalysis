@@ -7,14 +7,16 @@ from load_data.LoadData import DataFrameLoadder
 from analyse.utils import unique_ingr
 from wordcloud import WordCloud
 import random
+from analyse.utils import top_recipes
 
-df_ingr_map=pd.read_pickle('../data_files/ingr_map.pkl')
+df_ingr_map=pd.read_pickle('data_files/ingr_map.pkl')
 
-
-def display_recipes_page():
+def display_recipes_page(clean_df): 
     """
     Display the recipes page content.
     """
+    st.title("Recipes") 
+
     df_agg = st.session_state.clean_df
 
     # Get path of the images 
@@ -73,4 +75,23 @@ def display_recipes_page():
         ax.axis("off")
         st.pyplot(fig)   
 
+    # Section 1 : Most popular recipes
+    st.header("Most popular recipes")
+    top_recipe_df = top_recipes(st.session_state.clean_df)
+    #Display
+    st.table(top_recipe_df)
 
+    my_expander = st.expander(label='Nutritient Distribution options : ')
+    with my_expander:
+            # Create a radio button to choose the nutrient to plot the distribution
+            option = st.radio(
+                "Select a nutrient to display its distribution:",
+                ('Calories', 'Total Fat', 'Sugar', 'Sodium', 'Protein', 'Saturated Fat', 'Carbohydrates')
+    )
+    
+    plt.figure(figsize=(10, 5))
+    sns.histplot(st.session_state.clean_df[option], bins=20, kde=True, color='green')
+    plt.xlabel(option)
+    plt.ylabel('Frequency')
+    st.pyplot(plt)
+        

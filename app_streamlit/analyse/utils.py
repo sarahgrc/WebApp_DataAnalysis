@@ -1,7 +1,7 @@
 """functions used for statistics"""
 
 import ast
-import pandas as pd
+import pandas as pd 
 
 def metrics_main_contributor(df):
     """
@@ -85,7 +85,6 @@ def top_commented_recipes_by_contributors(df, top_contributors, max_recipes_per_
     
     # Sélectionner les colonnes pertinentes
     return top_recipes[['contributor_id', 'recipe_id', 'name', 'num_comments']]
-
 
 def count_contributors_by_recipe_range_with_bins(df):
     """
@@ -364,17 +363,175 @@ def user_recipes(merged_df, user_id):
     Returns:
         dict: Recipe counts per season.
     """
-    recipes_user_df=merged_df.loc[merged_df["contributor_id"]==user_id]
-    return recipes_user_df
+    recipes_user_df = merged_df.loc[merged_df["contributor_id"] == user_id]
+    return recipes_user_df 
 
-def count_recipes_per_user(df):
+
+def calculate_negative_points_nutri_score(row):
     """
-    Count the number of unique recipes per user.
+    Calculate the negative points that will lower the Nutri-Score based on 
+    the levels of certain nutrients: calories, sugar, saturated fat, and sodium.
 
     Args:
-        df (pd.DataFrame): DataFrame containing 'recipe_id' and 'contributor_id'.
+        row (dict): row from a DataFrame representing nutrition of the recipe.
 
     Returns:
-        pd.Series: Series with contributor IDs as index and recipe counts as values.
+        int: The total negative points calculated based on the thresholds for the given nutrients.
     """
-    return df.groupby('contributor_id')['recipe_id'].nunique()
+    # Calories
+    if row["Calories"] <= 335: calories_points = 0
+    elif row["Calories"] <= 670: calories_points = 1
+    elif row["Calories"] <= 1005: calories_points = 2
+    elif row["Calories"] <= 1340: calories_points = 3
+    elif row["Calories"] <= 1675: calories_points = 4
+    elif row["Calories"] <= 2010: calories_points = 5
+    elif row["Calories"] <= 2345: calories_points = 6
+    elif row["Calories"] <= 2680: calories_points = 7
+    elif row["Calories"] <= 3015: calories_points = 8
+    elif row["Calories"] <= 3350: calories_points = 9
+    else: calories_points = 10
+
+    # Sucres
+    if row["Sugar"] <= 4.5: sugar_points = 0
+    elif row["Sugar"] <= 9: sugar_points = 1
+    elif row["Sugar"] <= 13.5: sugar_points = 2
+    elif row["Sugar"] <= 18: sugar_points = 3
+    elif row["Sugar"] <= 22.5: sugar_points = 4
+    elif row["Sugar"] <= 27: sugar_points = 5
+    elif row["Sugar"] <= 31: sugar_points = 6
+    elif row["Sugar"] <= 36: sugar_points = 7
+    elif row["Sugar"] <= 40: sugar_points = 8
+    elif row["Sugar"] <= 45: sugar_points = 9
+    else: sugar_points = 10
+
+    # Graisses saturées
+    if row["Saturated Fat"] <= 1: fat_points = 0
+    elif row["Saturated Fat"] <= 2: fat_points = 1
+    elif row["Saturated Fat"] <= 3: fat_points = 2
+    elif row["Saturated Fat"] <= 4: fat_points = 3
+    elif row["Saturated Fat"] <= 5: fat_points = 4
+    elif row["Saturated Fat"] <= 6: fat_points = 5
+    elif row["Saturated Fat"] <= 7: fat_points = 6
+    elif row["Saturated Fat"] <= 8: fat_points = 7
+    elif row["Saturated Fat"] <= 9: fat_points = 8
+    elif row["Saturated Fat"] <= 10: fat_points = 9
+    else: fat_points = 10
+
+    # Sodium
+    if row["Sodium"] <= 90: sodium_points = 0
+    elif row["Sodium"] <= 180: sodium_points = 1
+    elif row["Sodium"] <= 270: sodium_points = 2
+    elif row["Sodium"] <= 360: sodium_points = 3
+    elif row["Sodium"] <= 450: sodium_points = 4
+    elif row["Sodium"] <= 540: sodium_points = 5
+    elif row["Sodium"] <= 630: sodium_points = 6
+    elif row["Sodium"] <= 720: sodium_points = 7
+    elif row["Sodium"] <= 810: sodium_points = 8
+    elif row["Sodium"] <= 900: sodium_points = 9
+    else: sodium_points = 10
+
+    return calories_points + sugar_points + fat_points + sodium_points
+
+def calculate_positive_points_nutri_score(row):
+    """
+    Calculate the positive points that will improve the Nutri-Score based on 
+    the level of protein in the food.
+
+    Args:
+        row (dict): row from a DataFrame representing a food item. 
+
+    Returns:
+        int: The total positive points calculated based on the protein thresholds.
+    """
+    if row["Protein"] <= 1.6: protein_points = 0
+    elif row["Protein"] <= 3.2: protein_points = 1
+    elif row["Protein"] <= 4.8: protein_points = 2
+    elif row["Protein"] <= 6.4: protein_points = 3
+    elif row["Protein"] <= 8: protein_points = 4
+    else: protein_points = 5
+
+    return protein_points
+
+def nutri_score(df):
+    """
+    Calculate the overall Nutri-Score (A to E) for a food item by considering both 
+    negative and positive points. 
+
+    Args:
+        df : DataFrame representing a food item. 
+                    It should include keys required for both negative and positive point 
+                    calculations: "Calories", "Sugar", "Saturated Fat", "Sodium", and "Protein".
+
+    Returns:
+        str: The Nutri-Score grade (A, B, C, D, or E) based on the calculated score.
+    """
+    negative_points = calculate_negative_points_nutri_score(df)
+    positive_points = calculate_positive_points_nutri_score(df)
+    score = negative_points - positive_points
+
+    # Conversion Nutri-Score
+    if score <= -1:
+        return "A"
+    elif 0 <= score <= 2:
+        return "B"
+    elif 3 <= score <= 10:
+        return "C"
+    elif 11 <= score <= 18:
+        return "D"
+    else:
+        return "E"
+    
+
+def top_recipes_user(df):
+    """
+    Returns the top 5 recipes with the most comments from a specific user.
+
+    Args:
+        df : pandas.DataFrame
+            DataFrame with these columns:
+            - 'user_id': user IDs
+            - 'name': recipe names.
+
+    Returns:
+        pandas.DataFrame
+            A DataFrame with:
+            - 'Recipe': recipe names
+            - 'Number of comments': count of comments per recipe.
+    """
+    top_user_recipe =  df['name'].value_counts().head(5)
+    top_user_recipe_df = top_user_recipe.reset_index()
+    top_user_recipe_df.columns = ['Recipe', 'Number of comments']
+    
+    return top_user_recipe_df
+
+
+def top_recipes(df):
+    """
+    Returns the top 5 recipes with the most comments.
+
+    Args:
+        df : pandas.DataFrame
+            DataFrame with all the preprocessed data
+
+    Returns:
+        pandas.DataFrame
+    """
+    # Top 5 commented recipes
+    top_recipe = df['name'].value_counts().head(5)
+    # Convert Series to DataFrame
+    top_recipe_df = top_recipe.reset_index()
+    top_recipe_df.columns = ['Recipe', 'Number of comments']
+    # Mean rating for each recipe 
+    mean_rating_df = (
+        df.groupby('name')['rating']
+        .mean()
+        .reset_index()
+        .rename(columns={'rating': 'Mean Rating'})
+    )
+    # Add the rating mean to the table 
+    top_recipe_df = top_recipe_df.merge(mean_rating_df, left_on='Recipe', right_on='name', how='left')
+    # remove col 'name' cause redondance
+    top_recipe_df.drop(columns=['name'], inplace=True)
+
+    return top_recipe_df
+
