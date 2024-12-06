@@ -15,19 +15,24 @@ if "logged_in" not in st.session_state:
 if "clean_df" not in st.session_state:
     # Executed only once per session
     st.session_state.clean_df = prepare_final_dataframe(
-        pd.read_csv('../data_files/RAW_interactions.csv'),
-        pd.read_csv('../data_files/RAW_recipes.csv'),
-        pd.read_csv('../data_files/PP_recipes.csv')
+        pd.read_csv('data_files/RAW_interactions.csv'),
+        pd.read_csv('data_files/RAW_recipes.csv'),
+        pd.read_csv('data_files/PP_recipes.csv')
     )
+
+#wrapper functions for pages
+def display_recipes_page_wrapper():
+    display_recipes_page(st.session_state.clean_df) 
+
+def display_profile_page_wrapper():
+    display_profile_page(st.session_state.clean_df)
+
 
 # Define the main function
 def main(): 
     """
     Display the main  page of the web app
     """
-
-    clean_df = st.session_state.clean_df  # Retrieve the data from session state
-
 
     # Show login message if not logged in
     if not st.session_state.logged_in:
@@ -40,8 +45,8 @@ def main():
         # Show account and report pages if logged in
         menu_page = st.Page(display_menu_page, title="Menu", icon=":material/thumb_up:")
         contributors_page = st.Page(display_contributors_page, title="Contributors", icon=":material/dashboard:")
-        recipes_page = st.Page(display_recipes_page, title="Recipe", icon=":material/dashboard:")
-        profile_page = st.Page(lambda: display_profile_page(clean_df), title="Profile", icon=":material/dashboard:")
+        recipes_page = st.Page(display_recipes_page_wrapper,  title="Recipes", icon=":material/dashboard:")
+        profile_page = st.Page(display_profile_page_wrapper, title="Your profile", icon=":material/dashboard:")
         pg = st.navigation([menu_page, contributors_page, recipes_page, profile_page])
 
         # Run the navigation
