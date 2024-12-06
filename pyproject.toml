@@ -12,7 +12,6 @@ scikit-learn = "^1.5.2"
 streamlit = "^1.40.2"
 seaborn = "^0.13.2"
 matplotlib = "^3.9.2"
-wordclout = "^1.9.4"
 
 [tool.poetry.dev-dependencies]
 pytest = "^8.3"
