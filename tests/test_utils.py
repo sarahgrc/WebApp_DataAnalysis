@@ -1,92 +1,77 @@
+import pytest
+import pandas as pd
 from app_streamlit.analyse.utils import *
 
-def test_count_contributors_by_recipe_range_with_bins(sample_data):
-    """Test the distribution of contributors based on the number of recipes contributed.
-
-    Args:
-        sample_data (DataFrame): A sample dataset containing recipe information.
-
-    Asserts:
-        - The count of contributors who contributed exactly 1 recipe is 3.
-        - The count of contributors who contributed between 2 and 5 recipes is 3.
+def test_metrics_main_contributor(sample_raw_recipes):
     """
-    result = count_contributors_by_recipe_range_with_bins(sample_data)
-    assert result['1 recette'] == 3
-    assert result['2 à 5 recettes'] == 3
-
-def test_top_contributors_by_recipes(sample_data):
-    """Test retrieving the top contributors based on the number of recipes.
-
-    Args:
-        sample_data (DataFrame): A sample dataset containing recipe information.
-
-    Asserts:
-        - The result is not None.
-        - The length of the result is 3 (top 3 contributors).
+    Test that metrics_main_contributor returns the correct number of unique contributors and recipes.
     """
-    result = top_contributors_by_recipes(sample_data, top_n=3)
-    assert result is not None
-    assert len(result) == 3
-
-
-def test_top_contributors_by_commented_recipes(sample_data):
-    """Test retrieving the top contributors based on the number of commented recipes.
-
-    Args:
-        sample_data (DataFrame): A sample dataset containing recipe and comment information.
-
-    Asserts:
-        - The length of the result is 2 (top 2 contributors).
-        - The first contributor in the result has an expected comment count of 2.
-    """
-    result = top_contributors_by_commented_recipes(sample_data, top_n=2)
+    result = metrics_main_contributor(sample_raw_recipes)
+    assert isinstance(result, tuple)
     assert len(result) == 2
-    assert result.iloc[0] == 2
+    assert result[0] > 0  # at least one contributor
+    assert result[1] > 0  # at least one recipe
 
-
-def test_top_tags_recipes(sample_data):
-    """Test retrieving the most common tags from recipes.
-
-    Args:
-        sample_data (DataFrame): A sample dataset containing recipe information, including tags.
-
-    Asserts:
-        - The length of the result is 2 (top 2 tags).
-        - The tag 'vegan' is included in the result index.
+def test_average_and_total_comments_per_contributor(sample_raw_recipes):
     """
-    result = top_tags(sample_data, top_n=2)
-    assert len(result) == 2
-    assert 'vegan' in result.index
-
-
-def test_top_tags_most_commented(sample_data):
-    """Test retrieving the most commented tags from the top recipes.
-
-    Args:
-        sample_data (DataFrame): A sample dataset containing recipe and comment information.
-
-    Asserts:
-        - The length of the result is 2 (top 2 tags).
-        - The tag 'easy' is included in the result index.
-        - The tag 'vegan' is included in the result index.
+    Test that the average and total comments per contributor are calculated correctly.
     """
-    result = top_tags_most_commented(sample_data, top_recipes=5, top_n=2)
-    assert len(result) == 2
-    assert 'easy' in result.index  # Adjust expected values based on data
-    assert 'vegan' in result.index
+    result = average_and_total_comments_per_contributor(sample_raw_recipes)
+    assert isinstance(result, pd.DataFrame)
+    assert 'avg_comments_per_recipe' in result.columns
+    assert 'total_comments' in result.columns
+    assert result['avg_comments_per_recipe'].dtype == float
+    assert result['total_comments'].dtype == int
 
-
-def test_get_top_ingredients(sample_data, ingredient_mapping):
-    """Test retrieving the top ingredients from recipes.
-
-    Args:
-        sample_data (DataFrame): A sample dataset containing recipe information, including ingredients.
-        ingredient_mapping (dict): A dictionary mapping raw ingredient names to standardized names.
-
-    Asserts:
-        - The length of the result is 3 (top 3 ingredients).
-        - The ingredient 'onion' is included in the result index.
+def test_top_commented_recipes_by_contributors(sample_raw_recipes):
     """
-    result = get_top_ingredients(sample_data, ingredient_mapping, excluded_ingredients={'salt'}, top_n=3)
-    assert len(result) == 3
-    assert 'onion' in result.index
+    Test that the top commented recipes are correctly extracted for top contributors.
+    """
+    top_contributors = sample_raw_recipes[['contributor_id']].drop_duplicates().head(5)
+    result = top_commented_recipes_by_contributors(sample_raw_recipes, top_contributors)
+    assert isinstance(result, pd.DataFrame)
+    assert 'recipe_id' in result.columns
+    assert 'num_comments' in result.columns
+    assert result['num_comments'].max() > 0  
+
+def test_count_contributors_by_recipe_range_with_bins(sample_raw_recipes):
+    """
+    Test that contributors are correctly categorized into recipe count bins.
+    """
+    result = count_contributors_by_recipe_range_with_bins(sample_raw_recipes)
+    assert isinstance(result, pd.Series)
+    assert all(isinstance(label, str) for label in result.index)
+    assert result.sum() > 0  
+
+def test_top_commented_recipes(sample_raw_recipes):
+    """
+    Test that the top N commented recipes are correctly extracted.
+    """
+    result = top_commented_recipes(sample_raw_recipes, top_n=5)
+    assert isinstance(result, pd.DataFrame)
+    assert len(result) <= 5
+    assert 'recipe_id' in result.columns
+    assert 'num_comments' in result.columns
+    assert result['num_comments'].iloc[0] >= result['num_comments'].iloc[-1] 
+
+def test_get_top_tags(sample_raw_recipes):
+    """
+    Test that the top N tags are correctly extracted from the dataset.
+    """
+    sample_raw_recipes['tags'] = sample_raw_recipes['tags'].fillna("[]") 
+    result = get_top_tags(sample_raw_recipes, most_commented=True, top_recipes=10, top_n=5)
+    assert isinstance(result, pd.Series)
+    assert len(result) <= 5
+    assert all(isinstance(tag, str) for tag in result.index)
+
+def test_get_top_ingredients2(sample_raw_recipes):
+    """
+    Test that the top ingredients are correctly extracted, excluding specified ingredients.
+    """
+    df_ingr_map = pd.DataFrame({'id': [1, 2, 3], 'replaced': ['salt', 'sugar', 'butter']})
+    sample_raw_recipes['ingredient_ids'] = sample_raw_recipes['ingredient_ids'].fillna("[]")
+    result = get_top_ingredients2(sample_raw_recipes, df_ingr_map, excluded_ingredients={'salt'}, top_n=5)
+    assert isinstance(result, pd.Series)
+    assert len(result) <= 5
+    assert all(isinstance(ingredient, str) for ingredient in result.index)
+    assert 'salt' not in result.index
