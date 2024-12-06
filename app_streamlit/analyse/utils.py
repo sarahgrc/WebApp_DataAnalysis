@@ -178,9 +178,6 @@ def top_commented_recipes_by_contributors(df, top_contributors, max_recipes_per_
     # Sélectionner les colonnes pertinentes
     return top_recipes[['contributor_id', 'recipe_id', 'name', 'num_comments']]
 
-
-
-
 def count_contributors_by_recipe_range_with_bins(df):
     """
     Categorize contributors based on the number of unique recipes they contributed.
@@ -276,13 +273,13 @@ def get_top_ingredients2(df, df_ingr_map, excluded_ingredients=None, top_n=10):
 
 
     return filtered_ingredients
-
+"""
 def count_recipes_season(df):
-    """
+    
     Count recipes per season.
 
     return filtered_ingredient_counts
-
+"""
 def trendy_ingredients_by_seasons(df,ingr_map,top_n):
     """
     This function create a dataframe for each seasons and returns the top 200 ingredients used
