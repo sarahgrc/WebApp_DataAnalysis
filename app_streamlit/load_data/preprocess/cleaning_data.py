@@ -1,7 +1,7 @@
 import pandas as pd
 import copy
 
-def outliers(dataframe, column,treshold_sup=None, treshold_inf=None, get_info=False):
+def outliers_df(dataframe, column,treshold_sup=None, treshold_inf=None, get_info=False):
     """
     function that returns a list of all outliers in a column depending on the treshold
     
@@ -74,4 +74,20 @@ def date_separated(col_name,dataframe):
     df['year'] = df[col_name].dt.year
 
     return df
+
+def add_season(df):
+    """ Add a season column to the dataset """
+    def get_season(month):
+        if month in [12, 1, 2]:
+            return 'winter'
+        elif month in [3, 4, 5]:
+            return 'spring'
+        elif month in [6, 7, 8]:
+            return 'summer'
+        elif month in [9, 10, 11]:
+            return 'autumn'
+
+    df['season'] = df['month'].map(get_season)
+    return df
+
 
