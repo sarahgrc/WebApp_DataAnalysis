@@ -364,12 +364,8 @@ def user_recipes(merged_df, user_id):
     Returns:
         dict: Recipe counts per season.
     """
-    return {
-        'winter': len(df[df['season'] == 'winter']),
-        'spring': len(df[df['season'] == 'spring']),
-        'summer': len(df[df['season'] == 'summer']),
-        'autumn': len(df[df['season'] == 'autumn']),
-    }
+    recipes_user_df=merged_df.loc[merged_df["contributor_id"]==user_id]
+    return recipes_user_df
 
 def count_recipes_per_user(df):
     """
