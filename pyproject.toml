@@ -9,6 +9,10 @@ readme = "README.md"
 python = "^3.12"
 pandas = "^2.2.3"
 
+[tool.poetry.dev-dependencies]
+pytest = "^8.3"
+flake8 = "^6.1.0"
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
