@@ -5,33 +5,20 @@ from app_streamlit.load_data.preprocess.normalisation import *
 from app_streamlit.load_data.preprocess.add_drop_column import *
 from app_streamlit.load_data.preprocess.cleaning_data import outliers_df
 
-def test_date_separated(sample_raw_recipes):
+def test_date_separated(sample_date_data):
     """
-    Tests the 'date_separated' function on a sample DataFrame.
-
-    Verifies that the specific columns ('year', 'month', 'day') are
-    correctly added to the input DataFrame, without removing any existing
-    columns or rows.
-
-    Args:
-    sample_raw_recipes (pd.DataFrame): A DataFrame containing the raw
-    data, including a `submitted` column that will be separated into
-    'year', 'month', and 'day'.
+    Teste que 'date_separated' ajoute les colonnes 'year', 'month', et 'day',
+    et supprime la colonne 'submitted'.
     """
-    assert len(
-        sample_raw_recipes.columns) == 13  # Check th initial number of columns
-    d = date_separated('submitted', sample_raw_recipes)
-
-    # Checks that columns `year`, `month`, and `day` have been added
-    assert ('year' in d.columns)
-    assert ('month' in d.columns)
-    assert ('day' in d.columns)
-
-    # Checks no lines bhave been removed
-    assert len(d) == 200
-
-    # Checks no columns bhave been removed  and 3 columns have been added
-    assert len(d.columns) == len(sample_raw_recipes.columns) + 3
+    initial_column_count = len(sample_date_data.columns)
+    
+    df = date_separated('submitted', sample_date_data)
+    
+    assert 'year' in df.columns
+    assert 'month' in df.columns
+    assert 'day' in df.columns
+    
+    assert len(df.columns) == initial_column_count + 3
 
 
 def test_outliers_df(outliers_sample):

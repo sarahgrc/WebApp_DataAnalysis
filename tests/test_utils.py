@@ -9,8 +9,8 @@ def test_metrics_main_contributor(sample_raw_recipes):
     result = metrics_main_contributor(sample_raw_recipes)
     assert isinstance(result, tuple)
     assert len(result) == 2
-    assert result[0] > 0  # There should be at least one contributor
-    assert result[1] > 0  # There should be at least one recipe
+    assert result[0] > 0  # at least one contributor
+    assert result[1] > 0  # at least one recipe
 
 def test_average_and_total_comments_per_contributor(sample_raw_recipes):
     """
@@ -32,7 +32,7 @@ def test_top_commented_recipes_by_contributors(sample_raw_recipes):
     assert isinstance(result, pd.DataFrame)
     assert 'recipe_id' in result.columns
     assert 'num_comments' in result.columns
-    assert result['num_comments'].max() > 0  # There should be comments
+    assert result['num_comments'].max() > 0  
 
 def test_count_contributors_by_recipe_range_with_bins(sample_raw_recipes):
     """
@@ -41,7 +41,7 @@ def test_count_contributors_by_recipe_range_with_bins(sample_raw_recipes):
     result = count_contributors_by_recipe_range_with_bins(sample_raw_recipes)
     assert isinstance(result, pd.Series)
     assert all(isinstance(label, str) for label in result.index)
-    assert result.sum() > 0  # At least one contributor should fall into a bin
+    assert result.sum() > 0  
 
 def test_top_commented_recipes(sample_raw_recipes):
     """
@@ -52,13 +52,13 @@ def test_top_commented_recipes(sample_raw_recipes):
     assert len(result) <= 5
     assert 'recipe_id' in result.columns
     assert 'num_comments' in result.columns
-    assert result['num_comments'].iloc[0] >= result['num_comments'].iloc[-1]  # Sorted order
+    assert result['num_comments'].iloc[0] >= result['num_comments'].iloc[-1] 
 
 def test_get_top_tags(sample_raw_recipes):
     """
     Test that the top N tags are correctly extracted from the dataset.
     """
-    sample_raw_recipes['tags'] = sample_raw_recipes['tags'].fillna("[]")  # Ensure no NaN values
+    sample_raw_recipes['tags'] = sample_raw_recipes['tags'].fillna("[]") 
     result = get_top_tags(sample_raw_recipes, most_commented=True, top_recipes=10, top_n=5)
     assert isinstance(result, pd.Series)
     assert len(result) <= 5
