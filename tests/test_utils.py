@@ -1,6 +1,6 @@
 import pytest
 import pandas as pd
-from app_streamlit.analyse.utils import *
+from app_streamlit.analyse.utils import * 
 
 def test_metrics_main_contributor(sample_raw_recipes):
     """

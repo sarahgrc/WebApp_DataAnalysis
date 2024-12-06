@@ -3,7 +3,7 @@ from app_streamlit.load_data.preprocess.merging import *
 from tests.conftest import sample_raw_recipes
 from app_streamlit.load_data.preprocess.normalisation import *
 from app_streamlit.load_data.preprocess.add_drop_column import *
-from app_streamlit.load_data.preprocess.cleaning_data import outliers_df
+from app_streamlit.load_data.preprocess.cleaning_data import outliers_df 
 
 def test_date_separated(sample_date_data):
     """
