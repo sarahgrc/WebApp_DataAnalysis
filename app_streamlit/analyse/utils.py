@@ -3,6 +3,8 @@
 import ast
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 
 
@@ -233,7 +235,7 @@ def get_top_tags(df, most_commented=False, top_recipes=20, top_n=10):
     else:
         filtered_df = df
 
-    tags_series = filtered_df['tags'].apply(eval).explode()
+    tags_series = filtered_df['tags'].explode()
     return tags_series.value_counts().head(top_n)
 
 def get_top_ingredients2(df, df_ingr_map, excluded_ingredients=None, top_n=10):
@@ -425,9 +427,9 @@ def best_recipe_filter_time(df, time_r, nb_show):
     list_cat_time = ['less_15min', '15_30min',
                      '30min_1h', '1h_2h', '2h_3h', '3h_4h', '4h_more']
     
-    if time_r not in list_cat_time or not nb_show in [0, 1, 2, 3, 4, 5]:
+    if time_r not in list_cat_time or not nb_show in [1, 2, 3, 4, 5, 10]:
         raise ValueError(f' ** ERROR ** time_r should be in {list_cat_time} -got : {
-                         time_r} and  nb_show in [0,1,2,3] - got : {nb_show} ')
+                         time_r} and  nb_show in [1, 2, 3, 4, 5, 10] - got : {nb_show} ')
     if 'minutes_tr' not in df.columns : 
         df['minutes_tr'] = cat_minutes(df)
     df = df[df['minutes_tr'] == time_r]
@@ -445,8 +447,8 @@ def get_insight_low_ranking(df):
         df : (pd.DataFrame) : DataFrame 
 
     Returns : 
-        df_low_mintr : (pd.DataFrame) filter on low ranking
-        df_mintr : (pd.DataFrame) 
+        df_low_count : (pd.DataFrame) filter on low ranking
+        df_high_count : (pd.DataFrame) filter on high ranking
 
     """
     if 'minutes_tr' not in df.columns : 
@@ -454,13 +456,54 @@ def get_insight_low_ranking(df):
 
     # filter low ranking - insight on time preparation
     df_low_rating = df[df['avg_reviews'].isin([1, 2])]
-    df_low_mintr = df_low_rating.groupby(
+    df_low_count = df_low_rating.groupby(
         ['minutes_tr']).size().reset_index(name='count')
-    l_low = np.sum(df_low_mintr['count'])
-    df_low_mintr['count'] = np.round(df_low_mintr['count']*100/l_low, 2)
+    l_low = np.sum(df_low_count['count'])
+    df_low_count['count'] = np.round(df_low_count['count']*100/l_low, 2)
     
-    # for all recipes
-    df_mintr = df.groupby(['minutes_tr']).size().reset_index(name='count')    
-    l_all = np.sum(df_mintr['count'])
-    df_mintr['count'] = np.round(df_mintr['count']*100/l_all, 2)
-    return df_low_mintr, df_mintr
+    # filter high ranking - insight on time preparation
+    df_high_count = df.groupby(['minutes_tr']).size().reset_index(name='count')    
+    l_all = np.sum(df_high_count['count'])
+    df_high_count['count'] = np.round(df_high_count['count']*100/l_all, 2)
+    return df_low_count, df_high_count
+
+
+
+
+def visualise_recipe_season(df):
+    """Visualise count per season with low and high rankings."""
+    
+    # Filter for high and low rankings
+    df_high = df[df['avg_reviews'].isin([4, 5])]
+    df_low = df[df['avg_reviews'].isin([1, 2, 3])]
+    
+    # Count recipes per season
+    count_data_high = df_high.groupby(['season']).size().reset_index(name='count')
+    count_data_low = df_low.groupby(['season']).size().reset_index(name='count')
+    
+    # Create the plot
+    fig, ax = plt.subplots()
+    sns.barplot(x='season', y='count', data=count_data_low, color='blue', label='Low ranking', ax=ax)
+    sns.barplot(x='season', y='count', data=count_data_high, alpha=0.7, color='orange', label='High ranking', ax=ax)
+    ax.set_xlabel('Season')
+    ax.set_ylabel('Count')
+    ax.set_title('Recipes count per season', weight='bold')
+    ax.legend()
+
+    return fig
+
+
+
+
+def visualise_low_rank_insight(df_low_count, df_high_count):
+    """ Visualise low vs high rank recipes over time of preparation"""
+    fig, ax = plt.subplots()
+    sns.barplot(df_low_count, x='minutes_tr', y='count',
+                label='low rating distribution', alpha=0.9, dodge=True)
+    sns.barplot(df_high_count, x='minutes_tr',  y='count',
+                label='all rating distribution', alpha=0.7, dodge=True)
+    ax.set_xlabel('time of preparation')
+    ax.set_ylabel('% of recipies')
+    ax.set_title('Sum of recipies (in %) per time of  preparation ', weight='bold')
+    ax.legend()
+    return fig 
