@@ -4,7 +4,7 @@ from menu_page import display_menu_page
 from contributors_page import display_contributors_page
 from recipes_page import display_recipes_page
 from profile_page import display_profile_page
-from load_data.preprocess.clean_dataframe import prepare_final_dataframe
+from load_data.LoadData import DataFrameLoadder
 
 # Set the page configuration
 st.set_page_config(page_title="Data Manager", page_icon=":material/edit:")
@@ -15,11 +15,10 @@ if "logged_in" not in st.session_state:
 
 if "clean_df" not in st.session_state:
     # Executed only once per session
-    st.session_state.clean_df = prepare_final_dataframe(
-        pd.read_csv('../data_files/RAW_interactions.csv'),
-        pd.read_csv('../data_files/RAW_recipes.csv'),
-        pd.read_csv('../data_files/PP_recipes.csv')
-    ).head(1000)
+    df = DataFrameLoadder(path_raw_interaction='../data_files/RAW_interactions.csv',
+                          path_raw_recipes='../data_files/RAW_recipes.csv',
+                          pp_recipe='../data_files/PP_recipes.csv').load()
+    st.session_state.clean_df = df
 
 # Define the main function
 def main():
