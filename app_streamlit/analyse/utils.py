@@ -3,6 +3,10 @@
 import ast
 import pandas as pd
 
+
+
+
+
 def metrics_main_contributor(df):
     """
     Calculate the total number of unique contributors and recipes in the dataset.
