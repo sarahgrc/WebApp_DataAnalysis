@@ -2,7 +2,7 @@
 
 import ast
 import pandas as pd
-
+import numpy as np
 
 
 
@@ -383,3 +383,84 @@ def count_recipes_per_user(df):
         pd.Series: Series with contributor IDs as index and recipe counts as values.
     """
     return df.groupby('contributor_id')['recipe_id'].nunique()
+
+
+# FIXME =============== up to data preprocess ?
+def cat_minutes(df):
+    """
+    Transform columns minutes in categorical values
+
+    Args:
+        df : (pd.DataFrame) : DataFrame containnning 'minutes' column
+
+    Returns:
+        cat_minutes : pd.Series : 'minutes' column transformed in categorical values
+
+    """
+    cat_minutes = ['less_15min' if 0 <= x <= 15 else
+                   '15_30min' if 15 < x <= 30 else
+                   '30min_1h' if 30 < x <= 60 else
+                   '1h_2h' if 60 < x <= 120 else
+                   '2h_3h' if 120 < x <= 180 else
+                   '3h_4h' if 180 < x < 240 else
+                   '4h_more'
+                   for x in df['minutes']]
+
+    return cat_minutes
+
+
+def best_recipe_filter_time(df, time_r, nb_show):
+    """
+    Get information about the best recipes (ranking-higher comments) filtered on time of preparation
+
+    args:
+        df : pd.DataFrame : dataframe containing columns 'minutes','name', 'n_steps', 'num_comments', 'ingredients','avg_reviews'
+        time_r : str : time of preparation (categorie) we want to filter results on 
+        nb_show : int : number of recipes to show
+
+    Returns:
+        result : pd.DataFrame : recipes info that have the best ranking + higher comment filtered on time_r
+
+    """
+    list_cat_time = ['less_15min', '15_30min',
+                     '30min_1h', '1h_2h', '2h_3h', '3h_4h', '4h_more']
+    
+    if time_r not in list_cat_time or not nb_show in [0, 1, 2, 3, 4, 5]:
+        raise ValueError(f' ** ERROR ** time_r should be in {list_cat_time} -got : {
+                         time_r} and  nb_show in [0,1,2,3] - got : {nb_show} ')
+    if 'minutes_tr' not in df.columns : 
+        df['minutes_tr'] = cat_minutes(df)
+    df = df[df['minutes_tr'] == time_r]
+
+    result = df[df['avg_reviews'] == 5][['name', 'n_steps', 'num_comments', 'ingredients','avg_reviews']]
+    result = result.sort_values(by='num_comments', ascending=False).head(nb_show)
+    
+    return result
+
+def get_insight_low_ranking(df):
+    """
+    get insight of number of recipes per time of preparation for all the recipes and for low ranking recpies
+    
+    args :
+        df : (pd.DataFrame) : DataFrame 
+
+    Returns : 
+        df_low_mintr : (pd.DataFrame) filter on low ranking
+        df_mintr : (pd.DataFrame) 
+
+    """
+    if 'minutes_tr' not in df.columns : 
+        df['minutes_tr'] = cat_minutes(df)
+
+    # filter low ranking - insight on time preparation
+    df_low_rating = df[df['avg_reviews'].isin([1, 2])]
+    df_low_mintr = df_low_rating.groupby(
+        ['minutes_tr']).size().reset_index(name='count')
+    l_low = np.sum(df_low_mintr['count'])
+    df_low_mintr['count'] = np.round(df_low_mintr['count']*100/l_low, 2)
+    
+    # for all recipes
+    df_mintr = df.groupby(['minutes_tr']).size().reset_index(name='count')    
+    l_all = np.sum(df_mintr['count'])
+    df_mintr['count'] = np.round(df_mintr['count']*100/l_all, 2)
+    return df_low_mintr, df_mintr
