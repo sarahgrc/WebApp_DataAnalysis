@@ -135,5 +135,4 @@ def best_recipe_filter_time(df, time_r, nb_show):
     
     return result
 
-r = best_recipe_filter(df, '30min_1h', 5)
-#print(best_clf(df, '30min_1h', 5))
+
