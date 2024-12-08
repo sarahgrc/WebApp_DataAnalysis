@@ -21,6 +21,7 @@ from analyse.utils import (
 df_ingr_map = pd.read_pickle("../data_files/ingr_map.pkl")
 
 
+
 # Source fonction my_metric : https://py.cafe/maartenbreddels/streamlit-custom-metrics
 def my_metric(label, value, bg_color, icon="fas fa-asterisk"):
     fontsize = 18
@@ -46,7 +47,7 @@ def my_metric(label, value, bg_color, icon="fas fa-asterisk"):
     st.markdown(lnk + htmlstr, unsafe_allow_html=True)
 
 
-def display_contributors_page(df):
+def display_contributors_page(df, df_ingr_map):
     st.sidebar.markdown(
         '<h1 style="color:orange;" font-size:24px;">Analysis Menu</h1>',
         unsafe_allow_html=True,
