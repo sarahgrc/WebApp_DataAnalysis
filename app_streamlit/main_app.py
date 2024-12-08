@@ -66,11 +66,6 @@ def main():
 
     clean_df = st.session_state.clean_df  # Retrieve the data from session state
 
-    
-    print("Main page")
-    missing_recipes = clean_df[clean_df['name'].isna()]
-    print(missing_recipes)
-    print(missing_recipes.shape)
 
     # Show login message if not logged in
     if not st.session_state.logged_in:
