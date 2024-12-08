@@ -92,7 +92,8 @@ def main():
 
 if __name__ == "__main__":
     
-    download_extract_zip(download_url, folder_storage)
+    if not os.path.exists('../data_files/RAW_interactions.csv') : 
+        download_extract_zip(download_url, folder_storage)
     
     if "clean_df" not in st.session_state:
     # Executed only once per session
