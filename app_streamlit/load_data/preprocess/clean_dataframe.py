@@ -1,4 +1,4 @@
-def prepare_final_dataframe3(raw_interaction, raw_recipes, pp_recipes):
+def prepare_final_dataframe(raw_interaction, raw_recipes, pp_recipes):
     """
     Prepare a new clean dataframe, that will be used for the analysis,
     by using other functions.
