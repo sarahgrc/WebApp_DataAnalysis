@@ -91,3 +91,11 @@ def add_season(df):
     return df
 
 
+def remove_outliers_iqr(df, column):
+        q1 = df[column].quantile(0.25)
+        q3 = df[column].quantile(0.75)
+        inter = q3 - q1
+        lower_bound = q1 - 1.5 * inter
+        upper_bound = q3 + 1.5 * inter
+        return df[(df[column] >= lower_bound) & (df[column] <= upper_bound)]
+
