@@ -11,7 +11,7 @@ import gdown
 
 # download all the necesary files for the project 
 
-zip_url = 'https://drive.google.com/file/d/11KFS8Kiyivn0vvaOJwHiNo42CAduzLuV/view?usp=drive_link'
+zip_url =  'https://drive.google.com/file/d/11KFS8Kiyivn0vvaOJwHiNo42CAduzLuV/view?usp=drive_link'
 file_id = zip_url.split('/d/')[1].split('/')[0]
 download_url = f"https://drive.google.com/uc?export=download&id={file_id}"
 folder_storage = '../data_files'
@@ -49,13 +49,13 @@ def download_extract_zip(gdrive_url, out_dir):
 
 #wrapper functions for pages
 def display_recipes_page_wrapper():
-    display_recipes_page(st.session_state.clean_df) 
+    display_recipes_page(st.session_state.clean_df , st.session_state.df_ingr_map) 
 
 def display_profile_page_wrapper():
     display_profile_page(st.session_state.clean_df)
 
 def display_contributors_page_wrapper():
-    display_contributors_page(st.session_state.clean_df)
+    display_contributors_page(st.session_state.clean_df, st.session_state.df_ingr_map)
 
 # Define the main function
 def main():
@@ -66,11 +66,6 @@ def main():
 
     clean_df = st.session_state.clean_df  # Retrieve the data from session state
 
-    
-    print("Main page")
-    missing_recipes = clean_df[clean_df['name'].isna()]
-    print(missing_recipes)
-    print(missing_recipes.shape)
 
     # Show login message if not logged in
     if not st.session_state.logged_in:
@@ -95,12 +90,6 @@ if __name__ == "__main__":
     if not os.path.exists('../data_files/RAW_interactions.csv') : 
         download_extract_zip(download_url, folder_storage)
     
-    if "clean_df" not in st.session_state:
-    # Executed only once per session
-      df = DataFrameLoadder(path_raw_interaction='./data_files/RAW_interactions.csv',
-                            path_raw_recipes='./data_files/RAW_recipes.csv',
-                            pp_recipe='./data_files/PP_recipes.csv').load()
-      st.session_state.clean_df = df
       
     # Set the page configuration
     st.set_page_config(page_title="Data Manager", page_icon=":material/edit:")
@@ -110,9 +99,15 @@ if __name__ == "__main__":
         st.session_state.logged_in = False
 
     if "clean_df" not in st.session_state:
+        
         # Executed only once per session
-        df = DataFrameLoadder(path_raw_interaction='../data_files/RAW_interactions.csv',
+        DF = DataFrameLoadder(path_raw_interaction='../data_files/RAW_interactions.csv',
                               path_raw_recipes='../data_files/RAW_recipes.csv',
-                              pp_recipe='../data_files/PP_recipes.csv').load()
+                              pp_recipe='../data_files/PP_recipes.csv')
+        df = DF.load()
         st.session_state.clean_df = df
+        
+    if "df_ingr_map" not in st.session_state:
+        df_ingr_map = pd.read_pickle("../data_files/ingr_map.pkl")
+        st.session_state.df_ingr_map = df_ingr_map
     main()
