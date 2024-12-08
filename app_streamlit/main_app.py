@@ -11,7 +11,7 @@ import gdown
 
 # download all the necesary files for the project 
 
-zip_url =   'https://drive.google.com/file/d/1Ny9w_yPJ8sib_FZmm0M4ixFBdNvEImtL/view?usp=sharing'  #'https://drive.google.com/file/d/11KFS8Kiyivn0vvaOJwHiNo42CAduzLuV/view?usp=drive_link'
+zip_url =  'https://drive.google.com/file/d/11KFS8Kiyivn0vvaOJwHiNo42CAduzLuV/view?usp=drive_link'
 file_id = zip_url.split('/d/')[1].split('/')[0]
 download_url = f"https://drive.google.com/uc?export=download&id={file_id}"
 folder_storage = '../data_files'
@@ -99,10 +99,6 @@ if __name__ == "__main__":
         st.session_state.logged_in = False
 
     if "clean_df" not in st.session_state:
-        # cheking existance correct  
-        print(f"PP_recipes : {os.path.exists('../data_files/PP_recipes.csv')} , col : {pd.read_csv('../data_files/PP_recipes.csv').columns}")
-        print(f"RAW_recipes : {os.path.exists('../data_files/RAW_recipes.csv')} , col = {pd.read_csv('../data_files/RAW_recipes.csv').columns}")
-        print(f"RAW_interactions : {os.path.exists('../data_files/RAW_interactions.csv')}, col = {pd.read_csv('../data_files/PP_recipes.csv').columns}")
         
         # Executed only once per session
         DF = DataFrameLoadder(path_raw_interaction='../data_files/RAW_interactions.csv',
