@@ -102,7 +102,7 @@ if __name__ == "__main__":
         # Executed only once per session
         df = DataFrameLoadder(path_raw_interaction='../data_files/RAW_interactions.csv',
                               path_raw_recipes='../data_files/RAW_recipes.csv',
-                              pp_recipe='../data_files/PP_recipes.csv').load().head(10)
+                              pp_recipe='../data_files/PP_recipes.csv').load()
         st.session_state.clean_df = df
         
     if "df_ingr_map" not in st.session_state:
