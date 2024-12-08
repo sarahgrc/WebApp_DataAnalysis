@@ -14,7 +14,7 @@ Here, you will discover:
 - How recipes are generally received.
 - Current trends.
 
-But most importantly, you'll learn how you, as a prominent contributor, can boost your profile and attract more people to your publications!
+You'll also learn how you can attract more people to your publications!
 
 ## Technologies
 This project uses the following Python libraries and frameworks:
