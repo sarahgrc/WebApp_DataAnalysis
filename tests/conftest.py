@@ -119,32 +119,6 @@ def recipes_table():
     })
     return data
 
-    
-@pytest.fixture
-def top_recipes_data():
-    """
-    Provides a sample DataFrame for testing top recipes by user.
-
-    This fixture creates a DataFrame representing recipes created by users. It includes:
-    - user_id
-    - name: name of the recipe.
-
-    Args:  
-        None
-
-    Returns:
-        pd.DataFrame: A DataFrame containing user recipe data with the following columns:
-            - 'user_id' (int)
-            - 'name' (str)
-    """
-    data = {
-        'user_id': [1, 1, 1, 2, 2, 3, 3],  # User IDs associated with the recipes
-        'name': ['Recipe A', 'Recipe B', 'Recipe A', 'Recipe C', 'Recipe D', 'Recipe E', 'Recipe A'],  # Recipe names
-        'rating': [4, 3, 5, 4, 5, 5, 5]
-    }
-    return pd.DataFrame(data)
-
-
 @pytest.fixture
 def nutriments_data():
     """
