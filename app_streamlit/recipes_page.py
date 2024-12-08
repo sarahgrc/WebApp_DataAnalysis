@@ -82,6 +82,74 @@ def display_recipes_page(clean_df):
         st.pyplot(fig)   
 
 
+        
+    
+    # Section : Most popular recipes
+
+    st.markdown('<p style="color:orange; font-weight:bold; font-size:35px;">Most popular recipes</p>', unsafe_allow_html=True)
+    top_recipe_df = top_recipes(clean_df)
+    #Display
+    st.table(top_recipe_df)
+    
+    # Section : Distribution nutrients
+    st.markdown('<p style="color:orange; font-weight:bold; font-size:35px;">Nutrients analysis</p>', unsafe_allow_html=True)
+    
+    my_expander = st.expander(label='Nutritient Distribution options :')
+    with my_expander:
+        # Nutriment
+        option = st.radio(
+            "Select a nutrient to display its distribution:",
+            ('Calories', 'Total Fat', 'Sugar', 'Sodium', 'Protein', 'Saturated Fat', 'Carbohydrates')
+        )
+        
+        bins = st.slider("Select the number of bins:", min_value=10, max_value=50, value=20, step=5)
+
+    color_map = {
+        'Calories': 'orange',
+        'Total Fat': 'beige',
+        'Sugar': 'pink',
+        'Sodium': 'blue',
+        'Protein': 'green',
+        'Saturated Fat': 'purple',
+        'Carbohydrates': 'brown'
+    }
+    plt.figure(figsize=(10, 5), facecolor='#0F1116')
+    # Without grids
+    sns.set_theme(style='white')  
+    # Historgam with KDE courb
+    sns.histplot(clean_df[option], bins=bins, kde=True, color=color_map[option])
+    plt.xlabel(option, fontsize=14, color='white')
+    plt.ylabel('Frequency', fontsize=14, color='white')
+    plt.gca().set_facecolor('#0F1116')
+    sns.despine()
+    st.pyplot(plt)
+
+
+
+    # Section : Nutri score
+    nutri_score_mapping = {"A": 1, "B": 2, "C": 3, "D": 4, "E": 5}
+    clean_df["nutri_score_numeric"] = clean_df["nutri_score"].map(nutri_score_mapping)
+
+    nutri_score_colors = {
+    "A": "lightgreen", 
+    "B": "palegreen", 
+    "C": "orange",    
+    "D": "lightsalmon",
+    "E": "lightcoral"  
+    }
+    fig = px.scatter(
+    clean_df,
+    x="nutri_score_numeric", 
+    y="num_comments",   
+    size="avg_ratings",     
+    color="nutri_score",    
+    color_discrete_map=nutri_score_colors,  
+    title="Relation entre Nutri-Score et Nombre de Commentaires",
+    labels={"nutri_score_numeric": "Nutri-Score", "num_comments": "Nombre de Commentaires"},
+    )
+    st.plotly_chart(fig, use_container_width=True)
+
+
     
     st.markdown('<p style="color:orange; font-weight:bold; font-size:35px;">Get some insights </p>', unsafe_allow_html=True)
     
@@ -91,10 +159,9 @@ def display_recipes_page(clean_df):
     
     st.write("Recipe Visualization by Season (High vs Low Rankings) \U0001F3C6")
     # FIXME add a try catch module --> logg
-    fig = visualise_recipe_season(df_agg)
-    st.pyplot(fig)
-    
-    df_low_count, df_high_count = get_insight_low_ranking(df_agg)
+    fig = visualise_recipe_season(clean_df)
+    st.pyplot(fig)    
+    df_low_count, df_high_count = get_insight_low_ranking(clean_df)
     fig = visualise_low_rank_insight(df_low_count, df_high_count)
     st.pyplot(fig)
     
@@ -119,81 +186,10 @@ def display_recipes_page(clean_df):
     "How many recipes you want to see ?",
     (1,2,5,10))
     
-    exemples_recipes = best_recipe_filter_time(df_agg, dico_time[opt_time], opt_nb_ex)
+    exemples_recipes = best_recipe_filter_time(clean_df, dico_time[opt_time], opt_nb_ex)
     if len(exemples_recipes) == 0 : 
         st.write('It seems that no 5 star recipe was found that satisfy this criteria ... Try to visualise fewer exemples or perhaps it is time for you to create the next revolutionnary recipe ! ')
     else : 
         st.write(exemples_recipes)
-    
-    
-    # Section : Most popular recipes
 
-    st.markdown('<p style="color:orange; font-weight:bold; font-size:35px;">Most popular recipes</p>', unsafe_allow_html=True)
-    top_recipe_df = top_recipes(clean_df)
-    #Display
-    st.table(top_recipe_df)
-    
-    # Section : Distribution nutrients
-    st.markdown('<p style="color:orange; font-weight:bold; font-size:35px;">Nutrients analysis</p>', unsafe_allow_html=True)
-    
-    my_expander = st.expander(label='Nutritient Distribution options :')
-    with my_expander:
-        # Sélectionner le nutriment à afficher
-        option = st.radio(
-            "Select a nutrient to display its distribution:",
-            ('Calories', 'Total Fat', 'Sugar', 'Sodium', 'Protein', 'Saturated Fat', 'Carbohydrates')
-        )
-        
-        # Créer un slider pour le nombre de bins
-        bins = st.slider("Select the number of bins:", min_value=10, max_value=50, value=20, step=5)
-
-    # Palette pour chaque nutriment
-    color_map = {
-        'Calories': 'orange',
-        'Total Fat': 'beige',
-        'Sugar': 'pink',
-        'Sodium': 'blue',
-        'Protein': 'green',
-        'Saturated Fat': 'purple',
-        'Carbohydrates': 'brown'
-    }
-    plt.figure(figsize=(10, 5), facecolor='#0F1116')
-    # Without grids
-    sns.set_theme(style='white')  
-    # Historgam with KDE cpurb
-    sns.histplot(clean_df[option], bins=bins, kde=True, color=color_map[option])
-    plt.xlabel(option, fontsize=14, color='white')
-    plt.ylabel('Frequency', fontsize=14, color='white')
-    plt.gca().set_facecolor('#0F1116')
-    sns.despine()
-    st.pyplot(plt)
-
-
-
-    # Section : Nutri score
-
-    # Convertir le Nutri-Score en valeurs numériques (si nécessaire)
-    nutri_score_mapping = {"A": 1, "B": 2, "C": 3, "D": 4, "E": 5}
-    clean_df["nutri_score_numeric"] = clean_df["nutri_score"].map(nutri_score_mapping)
-
-    nutri_score_colors = {
-    "A": "lightgreen",  # Vert pastel
-    "B": "palegreen",   # Vert clair
-    "C": "orange",      # Orange pastel
-    "D": "lightsalmon", # Rouge clair
-    "E": "lightcoral"   # Rouge pastel
-    }
-    fig = px.scatter(
-    clean_df,
-    x="nutri_score_numeric",  # Numérique pour Nutri-Score
-    y="num_comments",         # Nombre de commentaires
-    size="avg_ratings",       # Taille basée sur la moyenne des évaluations
-    color="nutri_score",      # Couleur basée sur le Nutri-Score
-    color_discrete_map=nutri_score_colors,  # Appliquer la palette définie
-    title="Relation entre Nutri-Score et Nombre de Commentaires",
-    labels={"nutri_score_numeric": "Nutri-Score", "num_comments": "Nombre de Commentaires"},
-    )
-
-    # Afficher le graphique dans Streamlit
-    st.plotly_chart(fig, use_container_width=True)
         

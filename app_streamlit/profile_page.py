@@ -5,7 +5,6 @@ from analyse.utils import top_recipes_user
 from analyse.utils import top_recipes
 
 
-
 # Source fonction my_metric : https://py.cafe/maartenbreddels/streamlit-custom-metrics
 def my_metric(label, value, bg_color, icon="fas fa-asterisk"):
     fontsize = 18 

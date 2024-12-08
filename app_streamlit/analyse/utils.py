@@ -535,10 +535,7 @@ def top_recipes(df):
     Returns:
         pandas.DataFrame
     """
-# Filtrer les recettes où 'name' n'est pas NaN
     filtered_df = df[df['name'].notna()]
-    
-    # S'assurer que toutes les valeurs de 'name' sont valides
     assert filtered_df['name'].isna().sum() == 0, "Filtered DataFrame still contains NaN in 'name'"
     
     # Top 5 commented recipes
@@ -581,7 +578,7 @@ def best_recipe_filter_time(df, time_r, nb_show):
     Get information about the best recipes (ranking-higher comments) filtered on time of preparation
 
     args:
-        df : pd.DataFrame : dataframe containing columns 'minutes','name', 'n_steps', 'num_comments', 'ingredients','avg_reviews'
+        df : pd.DataFrame : dataframe containing columns 'minutes','name', 'n_steps', 'num_comments', 'ingredients','avg_ratingss'
         time_r : str : time of preparation (categorie) we want to filter results on 
         nb_show : int : number of recipes to show
 
@@ -599,7 +596,7 @@ def best_recipe_filter_time(df, time_r, nb_show):
         df['minutes_tr'] = cat_minutes(df)
     df = df[df['minutes_tr'] == time_r]
 
-    result = df[df['avg_reviews'] == 5][['name', 'n_steps', 'num_comments', 'ingredients','avg_reviews']]
+    result = df[df['avg_ratings'] == 5][['name', 'n_steps', 'num_comments', 'ingredients','avg_ratings']]
     result = result.sort_values(by='num_comments', ascending=False).head(nb_show)
     
     return result
@@ -620,7 +617,7 @@ def get_insight_low_ranking(df):
         df['minutes_tr'] = cat_minutes(df)
 
     # filter low ranking - insight on time preparation
-    df_low_rating = df[df['avg_reviews'].isin([1, 2])]
+    df_low_rating = df[df['avg_ratings'].isin([1, 2])]
     df_low_count = df_low_rating.groupby(
         ['minutes_tr']).size().reset_index(name='count')
     l_low = np.sum(df_low_count['count'])
@@ -639,8 +636,8 @@ def visualise_recipe_season(df):
     """Visualise count per season with low and high rankings."""
     
     # Filter for high and low rankings
-    df_high = df[df['avg_reviews'].isin([4, 5])]
-    df_low = df[df['avg_reviews'].isin([1, 2, 3])]
+    df_high = df[df['avg_ratings'].isin([4, 5])]
+    df_low = df[df['avg_ratings'].isin([1, 2, 3])]
     
     # Count recipes per season
     count_data_high = df_high.groupby(['season']).size().reset_index(name='count')
