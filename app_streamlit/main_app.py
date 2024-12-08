@@ -49,7 +49,7 @@ def download_extract_zip(gdrive_url, out_dir):
 
 #wrapper functions for pages
 def display_recipes_page_wrapper():
-    display_recipes_page(st.session_state.clean_df , st.ssession_state.df_ingr_map) 
+    display_recipes_page(st.session_state.clean_df , st.session_state.df_ingr_map) 
 
 def display_profile_page_wrapper():
     display_profile_page(st.session_state.clean_df)
@@ -107,5 +107,5 @@ if __name__ == "__main__":
         
     if "df_ingr_map" not in st.session_state:
         df_ingr_map = pd.read_pickle("../data_files/ingr_map.pkl")
-        st.ssession_state.df_ingr_map = df_ingr_map
+        st.session_state.df_ingr_map = df_ingr_map
     main()
