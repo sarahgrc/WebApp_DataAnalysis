@@ -56,6 +56,19 @@ def prepare_final_dataframe(raw_interaction, raw_recipes, pp_recipes):
     
     df_merged.reset_index(drop=True, inplace=True)
 
+    # cleaning intermediate
+    if 'n_steps' in df_merged.columns:
+        df_merged.reset_index(drop=True, inplace=True)
+        outliers_n_steps = outliers_df(df_merged, 'n_steps', treshold_sup=20)
+        df_merged = df_merged[~df_merged['n_steps'].isin(outliers_n_steps)]
+        df_merged.reset_index(drop=True, inplace=True)
+
+    if 'minutes' in df_merged.columns:
+        df_merged.reset_index(drop=True, inplace=True)
+        outliers_minutes = outliers_df(df_merged, 'minutes', treshold_sup=240)
+        df_merged = df_merged[~df_merged['minutes'].isin(outliers_minutes)]
+        df_merged.reset_index(drop=True, inplace=True)
+
     # step 5 : delate unusfull columns
     columns_to_drop = ['description']
     df_merged = drop_columns(df_merged, columns_to_drop)
