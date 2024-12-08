@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd 
 from analyse.utils import user_recipes
 from analyse.utils import top_recipes_user
+from analyse.utils import top_recipes
 
 
 
@@ -32,35 +33,41 @@ def display_profile_page(clean_df, user_id = 47892):
     Args:
         clean_df : pandas.DataFrame
             DataFrame containing recipe data.
-    """
-    st.title("Profile tracking : User " + str(user_id)) 
+    """ 
+
+    clean_df =  st.session_state.clean_df 
+    
+    st.title("Profile Analysis")
+    st.write("Here you will find some metrics about your profile.")
+    title = "Profile tracking : User " + str(user_id) 
+    st.markdown('<p style="color:orange; font-weight:bold; font-size:35px;">' +  "Profile tracking : User " + str(user_id) +'</p>', unsafe_allow_html=True)
     # Filter data for the given user
     user_recipes_df = user_recipes(clean_df, user_id)
     # Check if user has data
     if user_recipes_df.empty:
         st.warning("No data available for this user.")
-        return
+        return 
     # Get top recipes using the existing function
-    top_recipes_df = top_recipes_user(clean_df)
+    top_recipes_df = top_recipes_user(user_recipes_df)
 
 
     # top_user_recipe.rename(columns={'value': 'Number'}, inplace = True)
     
     # Moyenne com par recette = Nb de com / Nb de recettes 
-    nb_com_mean = user_recipes_df['name'].value_counts().mean()  
-    rating_mean = user_recipes_df['rating'].mean()
-
+    nb_com_mean = user_recipes_df['num_comments'].mean()
+    rating_mean = user_recipes_df['avg_ratings'].mean()
     # Display
-    blue = (51, 144, 255)
+    rose = (240, 135, 114)
+    coral = (200, 90, 80)
     icon_com = "fas fa-solid fa-comment"
     icon_rating = "fas fa-solid fa-star"
 
     col1, col2 = st.columns(2)
     with col1:
-        my_metric("Average comments by recipe", round(nb_com_mean, 2), blue, icon_com)
+        my_metric("Average comments by recipe", round(nb_com_mean, 2), rose, icon_com)
     with col2:
-        my_metric("Average rating", round(rating_mean, 2), blue, icon_rating)
+        my_metric("Average rating", round(rating_mean, 2), coral, icon_rating)
 
     # Display top recipes
-    st.header("Your 5 most popular recipes : ")
+    st.markdown('<p style="color:orange; font-weight:bold; font-size:35px;">' +  "Your 5 most popular recipes :" + '</p>', unsafe_allow_html=True)
     st.table(top_recipes_df)

@@ -6,7 +6,7 @@ from load_data.preprocess.add_drop_column import drop_columns
 from load_data.preprocess.cleaning_data import outliers_df
 from load_data.preprocess.cleaning_data import date_separated
 from load_data.preprocess.cleaning_data import add_season
-from analyse.utils import calculate_negative_points_nutri_score, calculate_positive_points_nutri_score, nutri_score
+from analyse.utils import nutri_score
 
 def prepare_final_dataframe(raw_interaction, raw_recipes, pp_recipes):
     """
@@ -22,14 +22,30 @@ def prepare_final_dataframe(raw_interaction, raw_recipes, pp_recipes):
         df_merged (DataFrame): final dataFrame
     """
 
+    missing_recipes = raw_recipes[raw_recipes['name'].isna()]
+    print(missing_recipes)
+    print(missing_recipes.shape)
+    print(raw_recipes.columns)
+
     # In order to avoid memory error on streamlit
     batch_size = 50000  # Nombre de lignes à traiter à la fois
     chunks = []
     for i in range(0, len(raw_recipes), batch_size):
-        chunk = raw_recipes.iloc[i:i+batch_size].copy()
+        chunk = raw_recipes.iloc[i:i + batch_size].copy()
+    
+        # Extraction des colonnes de nutrition
         chunk[['Calories', 'Total Fat', 'Sugar', 'Sodium', 'Protein', 'Saturated Fat', 'Carbohydrates']] = \
             chunk['nutrition'].str.strip('[]').str.split(',', expand=True)
-        chunks.append(chunk)
+        
+        # Conversion des colonnes nutritionnelles en float
+        nutrition_cols = ['Calories', 'Total Fat', 'Sugar', 'Sodium', 'Protein', 'Saturated Fat', 'Carbohydrates']
+        chunk[nutrition_cols] = chunk[nutrition_cols].apply(pd.to_numeric, errors='coerce')
+        
+        # Calcul du Nutri-Score pour chaque chunk
+        chunk['nutri_score'] = chunk.apply(nutri_score, axis=1)
+        
+    # Ajouter le chunk traité à la liste
+    chunks.append(chunk)
 
     # Recombine the chunks after treatment
     raw_recipes = pd.concat(chunks, ignore_index=True)
@@ -37,6 +53,9 @@ def prepare_final_dataframe(raw_interaction, raw_recipes, pp_recipes):
     raw_recipes[nutrition_cols] = raw_recipes['nutrition'].str.strip('[]').str.split(',', expand=True)
     # Convert col in type float 
     raw_recipes[nutrition_cols] = raw_recipes[nutrition_cols].apply(pd.to_numeric, errors='coerce')
+
+  
+
 
 
     # Colomns to filter
@@ -51,15 +70,14 @@ def prepare_final_dataframe(raw_interaction, raw_recipes, pp_recipes):
         raw_recipes = raw_recipes[(raw_recipes[col] >= lower_bound) & (raw_recipes[col] <= upper_bound)]
 
 
-
-    # Step 1 : Merging raw_interaction and raw_recipes on "recipe_id" and "id" 
-    # Rename 'id' to 'recipe_id' in raw_recipes 
+    # step 1 : merge raw_interaction et raw_recipes on "recipe_id" et "id"
     raw_recipes_renamed = raw_recipes.rename(columns={'id': 'recipe_id'})
-    df_merged = pd.merge(raw_interaction, raw_recipes_renamed, on="recipe_id", how="left")
+    df_merged = dataframe_concat([raw_interaction, raw_recipes_renamed], key='recipe_id', join="left")
+    df_merged.reset_index(drop=True, inplace=True)
 
-    # Step 2 : Add columns 'ingredient_ids', 'ingredient_tokens' from pp_recipes
+    # step 2 : add columns 'ingredient_ids', 'ingredient_tokens' on pp_recipes
     pp_recipes_renamed = pp_recipes.rename(columns={'id': 'recipe_id'})
-    df_merged = pd.merge(
+    df_merged = add_columns(
         df_merged,
         pp_recipes_renamed,
         key_target='recipe_id',
@@ -83,7 +101,10 @@ def prepare_final_dataframe(raw_interaction, raw_recipes, pp_recipes):
 
     # Step 4 : clean dataframe
     if 'n_steps' in df_merged.columns:
-        df_merged = df_merged[df_merged['n_steps'] <= 20]  # Keep values <= 20
+        df_merged.reset_index(drop=True, inplace=True)
+        outliers_n_steps = outliers_df(df_merged, 'n_steps', treshold_sup=20)
+        df_merged = df_merged[~df_merged['n_steps'].isin(outliers_n_steps)]
+        df_merged.reset_index(drop=True, inplace=True)
 
     if 'minutes' in df_merged.columns:
         df_merged.reset_index(drop=True, inplace=True)
@@ -91,15 +112,14 @@ def prepare_final_dataframe(raw_interaction, raw_recipes, pp_recipes):
         df_merged = df_merged[~df_merged['minutes'].isin(outliers_minutes)]
         df_merged.reset_index(drop=True, inplace=True)
 
-    # step 5 : delete unusfull columns
+    # step 5 : delate unusfull columns
     columns_to_drop = ['description']
-    df_merged.drop(columns=[col for col in columns_to_drop if col in df_merged.columns], inplace=True)
+    df_merged = drop_columns(df_merged, columns_to_drop)
+    df_merged = df_aggregate(df_merged)
 
+    # step 6 : add a column for seasons 
+    df_merged=add_season(df_merged)     
 
-
-    print("Merged df head : ")
-    print(df_merged.head())
-    
 
 
     return df_merged

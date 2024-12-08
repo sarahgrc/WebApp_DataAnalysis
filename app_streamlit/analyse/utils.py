@@ -228,7 +228,7 @@ def get_top_tags(df, most_commented=False, top_recipes=20, top_n=10):
     else:
         filtered_df = df
 
-    tags_series = filtered_df['tags'].apply(eval).explode()
+    tags_series = filtered_df['tags'].explode()
     return tags_series.value_counts().head(top_n)
 
 def get_top_ingredients2(df, df_ingr_map, excluded_ingredients=None, top_n=10):
@@ -482,6 +482,8 @@ def nutri_score(df):
     else:
         return "E"
     
+    
+    
 
 def top_recipes_user(df):
     """
@@ -492,18 +494,27 @@ def top_recipes_user(df):
             DataFrame with these columns:
             - 'user_id': user IDs
             - 'name': recipe names.
+            - 'avg_rating': average rating.
+            - 'number_comments': number of comments.
 
     Returns:
         pandas.DataFrame
             A DataFrame with:
-            - 'Recipe': recipe names
+            - 'Recipe': recipe names.
             - 'Number of comments': count of comments per recipe.
+            - 'Mean Rating': average rating for each recipe.
     """
-    top_user_recipe =  df['name'].value_counts().head(5)
-    top_user_recipe_df = top_user_recipe.reset_index()
-    top_user_recipe_df.columns = ['Recipe', 'Number of comments']
     
-    return top_user_recipe_df
+    filtered_df = df[df['name'].notna()]
+    top_user_recipe = filtered_df[['name', 'num_comments', 'avg_ratings']].sort_values(
+        by='num_comments', ascending=False
+    ).head(5)
+
+    top_user_recipe = top_user_recipe.rename(
+        columns={'name': 'Recipe', 'num_comments': 'Number of comments', 'avg_ratings': 'Average Rating'}
+    )
+
+    return top_user_recipe
 
 
 def top_recipes(df):
@@ -517,22 +528,19 @@ def top_recipes(df):
     Returns:
         pandas.DataFrame
     """
+# Filtrer les recettes où 'name' n'est pas NaN
+    filtered_df = df[df['name'].notna()]
+    
+    # S'assurer que toutes les valeurs de 'name' sont valides
+    assert filtered_df['name'].isna().sum() == 0, "Filtered DataFrame still contains NaN in 'name'"
+    
     # Top 5 commented recipes
-    top_recipe = df['name'].value_counts().head(5)
-    # Convert Series to DataFrame
-    top_recipe_df = top_recipe.reset_index()
-    top_recipe_df.columns = ['Recipe', 'Number of comments']
-    # Mean rating for each recipe 
-    mean_rating_df = (
-        df.groupby('name')['rating']
-        .mean()
-        .reset_index()
-        .rename(columns={'rating': 'Mean Rating'})
+    top_recipe_df = filtered_df[['name', 'num_comments', 'avg_ratings']].sort_values(
+        by='num_comments', ascending=False
+    ).head(5)
+    top_recipe_df = top_recipe_df.rename(
+        columns={'name': 'Recipe', 'num_comments': 'Number of comments', 'avg_ratings': 'Avg Rating'}
     )
-    # Add the rating mean to the table 
-    top_recipe_df = top_recipe_df.merge(mean_rating_df, left_on='Recipe', right_on='name', how='left')
-    # remove col 'name' cause redondance
-    top_recipe_df.drop(columns=['name'], inplace=True)
 
     return top_recipe_df
 

@@ -14,7 +14,7 @@ def df_aggregate(df):
 
     aggregated_metrics = df.groupby('recipe_id').agg(
         num_comments=('user_id', 'nunique'),
-        avg_reviews=('rating', 'mean')
+        avg_ratings=('rating', 'mean')
     ).reset_index()
 
     
