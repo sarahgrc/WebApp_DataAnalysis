@@ -12,12 +12,12 @@ import numpy as np
 import plotly.express as px
 from analyse.utils import top_recipes_user
 
-df_ingr_map=pd.read_pickle('../data_files/ingr_map.pkl')
+#df_ingr_map=pd.read_pickle('../data_files/ingr_map.pkl')
 
 
 
 
-def display_recipes_page(clean_df): 
+def display_recipes_page(clean_df, df_ingr_map): 
     """
     Display the recipes page content.
     """
