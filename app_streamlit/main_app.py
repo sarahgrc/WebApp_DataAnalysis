@@ -11,7 +11,7 @@ import gdown
 
 # download all the necesary files for the project 
 
-zip_url =   'https://drive.google.com/file/d/1D79eoCITGfd9yz0cWDzQsxoL7TwadWC_/view?usp=sharing'  #'https://drive.google.com/file/d/11KFS8Kiyivn0vvaOJwHiNo42CAduzLuV/view?usp=drive_link'
+zip_url =   'https://drive.google.com/file/d/1Ny9w_yPJ8sib_FZmm0M4ixFBdNvEImtL/view?usp=sharing'  #'https://drive.google.com/file/d/11KFS8Kiyivn0vvaOJwHiNo42CAduzLuV/view?usp=drive_link'
 file_id = zip_url.split('/d/')[1].split('/')[0]
 download_url = f"https://drive.google.com/uc?export=download&id={file_id}"
 folder_storage = '../data_files'
