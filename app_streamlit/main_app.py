@@ -99,10 +99,16 @@ if __name__ == "__main__":
         st.session_state.logged_in = False
 
     if "clean_df" not in st.session_state:
+        # cheking existance correct  
+        print(f"PP_recipes : {os.path.exists('../data_files/PP_recipes.csv')}")
+        print(f"RAW_recipes : {os.path.exists('../data_files/RAW_recipes.csv')}")
+        print(f"RAW_interactions : {os.path.exists('../data_files/RAW_interactions.csv')}")
+        
         # Executed only once per session
-        df = DataFrameLoadder(path_raw_interaction='../data_files/RAW_interactions.csv',
+        DF = DataFrameLoadder(path_raw_interaction='../data_files/RAW_interactions.csv',
                               path_raw_recipes='../data_files/RAW_recipes.csv',
-                              pp_recipe='../data_files/PP_recipes.csv').load()
+                              pp_recipe='../data_files/PP_recipes.csv')
+        df = DF.load()
         st.session_state.clean_df = df
         
     if "df_ingr_map" not in st.session_state:
