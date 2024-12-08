@@ -18,7 +18,7 @@ from analyse.utils import (
     average_and_total_comments_per_contributor,
 )
 
-df_ingr_map = pd.read_pickle("./data_files/ingr_map.pkl")
+df_ingr_map = pd.read_pickle("../data_files/ingr_map.pkl")
 
 
 # Source fonction my_metric : https://py.cafe/maartenbreddels/streamlit-custom-metrics

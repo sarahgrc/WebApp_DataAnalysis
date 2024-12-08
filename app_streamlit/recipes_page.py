@@ -12,7 +12,7 @@ import numpy as np
 import plotly.express as px
 from analyse.utils import top_recipes_user
 
-df_ingr_map=pd.read_pickle('data_files/ingr_map.pkl')
+df_ingr_map=pd.read_pickle('../data_files/ingr_map.pkl')
 
 
 
