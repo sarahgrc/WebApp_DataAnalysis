@@ -5,6 +5,8 @@ import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 import plotly.express as px
+import os
+
 from wordcloud import WordCloud
 
 
@@ -16,9 +18,10 @@ from analyse.utils import (
     average_and_total_comments_per_contributor,
 )
 
-df_ingr_map = pd.read_pickle("../data_files/ingr_map.pkl")
+df_ingr_map = pd.read_pickle("./data_files/ingr_map.pkl")
 
 
+# Source fonction my_metric : https://py.cafe/maartenbreddels/streamlit-custom-metrics
 def my_metric(label, value, bg_color, icon="fas fa-asterisk"):
     fontsize = 18
     lnk = (
@@ -48,6 +51,17 @@ def display_contributors_page(df):
         '<h1 style="color:orange;" font-size:24px;">Analysis Menu</h1>',
         unsafe_allow_html=True,
     )
+
+    current_dir = os.path.dirname(__file__)
+    images_path = os.path.abspath(os.path.join(current_dir, "..", "images"))
+    img_1_path =os.path.join(images_path, "raw-ingredient.png")
+
+    st.markdown('<p style="color:orange; font-weight:bold; font-size:35px;">Global analysis of recipes</p>', unsafe_allow_html=True)
+    st.write("Here, you will find analyses that will allow you to see who the contributors "
+             "with the most commented recipes are and what their specificities are (tags, ingredients).")
+
+    st.image(img_1_path)
+
     selected_page = st.sidebar.radio(
         "Select a page:",
         ("Overview", "Focus Contributor"),

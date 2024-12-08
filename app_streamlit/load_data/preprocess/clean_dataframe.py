@@ -9,19 +9,68 @@ from load_data.preprocess.cleaning_data import add_season
 from analyse.utils import nutri_score
 from load_data.preprocess.cleaning_data import remove_outliers_iqr
 
+
 def prepare_final_dataframe(raw_interaction, raw_recipes, pp_recipes):
     """
-    Prepare a new clean dataframe, that will be used for the analysis,
     by using other functions.
 
     Args:
         raw_interaction (DataFrame): raw dataFrame of interactions from users
         raw_recipes (DataFrame): raw dataFrame with recipes informations
-        pp_recipes (DataFrame): recipies dataFrame preprocessed
+    by using other functions. 
 
-    Returns:
-        df_merged (DataFrame): final dataFrame
-    """
+    Args:
+        raw_interaction (DataFrame): raw dataFrame of interactions from users 
+        raw_recipes (DataFrame): raw dataFrame with recipes informations 
+
+
+    missing_recipes = raw_recipes[raw_recipes['name'].isna()]
+    print(missing_recipes)
+    print(missing_recipes.shape)
+    print(raw_recipes.columns)
+
+    # In order to avoid memory error on streamlit
+    batch_size = 50000  # Nombre de lignes à traiter à la fois
+    chunks = []
+    for i in range(0, len(raw_recipes), batch_size):
+        chunk = raw_recipes.iloc[i:i + batch_size].copy()
+    
+        # Extraction des colonnes de nutrition
+        chunk[['Calories', 'Total Fat', 'Sugar', 'Sodium', 'Protein', 'Saturated Fat', 'Carbohydrates']] = \
+            chunk['nutrition'].str.strip('[]').str.split(',', expand=True)
+        
+        # Conversion des colonnes nutritionnelles en float
+        nutrition_cols = ['Calories', 'Total Fat', 'Sugar', 'Sodium', 'Protein', 'Saturated Fat', 'Carbohydrates']
+        chunk[nutrition_cols] = chunk[nutrition_cols].apply(pd.to_numeric, errors='coerce')
+        
+        # Calcul du Nutri-Score pour chaque chunk
+        chunk['nutri_score'] = chunk.apply(nutri_score, axis=1)
+        
+    # Ajouter le chunk traité à la liste
+    chunks.append(chunk)
+
+    # Recombine the chunks after treatment
+    raw_recipes = pd.concat(chunks, ignore_index=True)
+    nutrition_cols = ['Calories', 'Total Fat', 'Sugar', 'Sodium', 'Protein', 'Saturated Fat', 'Carbohydrates']
+    raw_recipes[nutrition_cols] = raw_recipes['nutrition'].str.strip('[]').str.split(',', expand=True)
+    # Convert col in type float 
+    raw_recipes[nutrition_cols] = raw_recipes[nutrition_cols].apply(pd.to_numeric, errors='coerce')
+
+  
+
+
+
+    # Colomns to filter
+    columns_to_filter = ["Calories", "Total Fat", "Sugar", "Sodium", "Protein", "Saturated Fat", "Carbohydrates"]
+
+    # Apply thresholds of 95%
+    for col in columns_to_filter:
+        lower_bound = raw_recipes[col].quantile(0.025)  # 2.5% percentile
+        upper_bound = raw_recipes[col].quantile(0.975)  # 97.5% percentile
+
+        # Filter values outside of the bounds
+        raw_recipes = raw_recipes[(raw_recipes[col] >= lower_bound) & (raw_recipes[col] <= upper_bound)]
+
 
     # step 1 : merge raw_interaction et raw_recipes on "recipe_id" et "id"
     raw_recipes_renamed = raw_recipes.rename(columns={'id': 'recipe_id'})
@@ -66,6 +115,7 @@ def prepare_final_dataframe(raw_interaction, raw_recipes, pp_recipes):
     df_merged = drop_columns(df_merged, columns_to_drop)
     df_merged = df_aggregate(df_merged)
 
+
     # step 6 : add a column for seasons
     df_merged=add_season(df_merged)  
 
@@ -99,3 +149,11 @@ def prepare_final_dataframe(raw_interaction, raw_recipes, pp_recipes):
 
 
     return df_merged
+
+    # step  9: add a column for seasons 
+    df_merged=add_season(df_merged)     
+
+
+
+    return df_merged
+
