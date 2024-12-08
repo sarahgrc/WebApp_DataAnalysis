@@ -229,23 +229,40 @@ def get_top_tags(df, most_commented=False, top_recipes=20, top_n=10):
     else:
         filtered_df = df
 
-    tags_series = filtered_df['tags'].apply(eval).explode()
+    # Parse 'tags' strings into lists
+    def parse_tags(value):
+        if isinstance(value, str):
+            # Remove brackets and split by commas
+            return [tag.strip(" '\"") for tag in value.strip('[]').split(',')]
+        return []
+
+    # Apply parsing, then explode and count occurrences
+    tags_series = filtered_df['tags'].apply(parse_tags).explode()
     return tags_series.value_counts().head(top_n)
 
 def get_top_ingredients2(df, df_ingr_map, excluded_ingredients=None, top_n=10):
-    """
-    Find the most frequently used ingredients, excluding common ones.
-
-    Args:
-        df (pd.DataFrame): DataFrame with recipe data.
-        df_ingr_map (pd.DataFrame): DataFrame mapping ingredient IDs to their names.
-        excluded_ingredients (set, optional): Ingredients to exclude.
-        top_n (int): Number of top ingredients to return.
-
-    Returns:
-        pd.Series: Top N ingredients and their counts.
-    """
     ingr_map = df_ingr_map.set_index('id')['replaced'].to_dict()
+    def parse_ingredient_ids(ids, ingr_map):
+        if isinstance(ids, str):
+            ids = ids.strip('[]')
+            try:
+                return [ingr_map.get(int(ingr.strip()), 'Unknown') for ingr in ids.split(',') if ingr.strip()]
+            except ValueError:
+                return []
+        return []
+    df['mapped_ingredients'] = df['ingredient_ids'].apply(lambda ids: parse_ingredient_ids(ids, ingr_map))
+    if excluded_ingredients is None:
+        excluded_ingredients = {
+            'black pepper', 'vegetable oil', 'salt', 'pepper', 'olive oil',
+            'butter', 'water', 'sugar', 'flour', 'brown sugar',
+        }
+    filtered_ingredients = (df['mapped_ingredients']
+        .explode()
+        .loc[lambda x: ~x.isin(excluded_ingredients)]
+        .value_counts()
+        .head(top_n)
+    )
+    return filtered_ingredients
 
     def map_ingredient_ids(ids):
         if pd.isna(ids):
