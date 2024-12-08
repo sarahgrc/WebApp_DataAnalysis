@@ -7,17 +7,23 @@ from load_data.LoadData import DataFrameLoadder
 from analyse.utils import unique_ingr, cat_minutes, get_insight_low_ranking, best_recipe_filter_time, visualise_recipe_season, visualise_low_rank_insight
 from wordcloud import WordCloud
 import random
+from analyse.utils import top_recipes
+import numpy as np
+import plotly.express as px
+from analyse.utils import top_recipes_user
 
-df_ingr_map=pd.read_pickle('../data_files/ingr_map.pkl')
+df_ingr_map=pd.read_pickle('data_files/ingr_map.pkl')
 
 
 
 
-def display_recipes_page():
+def display_recipes_page(clean_df): 
     """
     Display the recipes page content.
     """
-    df_agg = st.session_state.clean_df
+    st.title("Recipes")
+
+    clean_df = st.session_state.clean_df
 
     # Get path of the images 
     current_dir = os.path.dirname(__file__)
@@ -37,7 +43,7 @@ def display_recipes_page():
     st.write("You selected :", genre)
     
     top_number_ingr = st.text_area("Enter the amount of ingredients to compare (default set to 200) and select again the season:",'200')
-    winter,summer,spring,autumn=unique_ingr(df_agg,df_ingr_map,int(top_number_ingr))
+    winter,summer,spring,autumn=unique_ingr(clean_df,df_ingr_map,int(top_number_ingr))
 
     def word_to_count(lst):
         dico={}
@@ -120,4 +126,74 @@ def display_recipes_page():
         st.write(exemples_recipes)
     
     
+    # Section : Most popular recipes
 
+    st.markdown('<p style="color:orange; font-weight:bold; font-size:35px;">Most popular recipes</p>', unsafe_allow_html=True)
+    top_recipe_df = top_recipes(clean_df)
+    #Display
+    st.table(top_recipe_df)
+    
+    # Section : Distribution nutrients
+    st.markdown('<p style="color:orange; font-weight:bold; font-size:35px;">Nutrients analysis</p>', unsafe_allow_html=True)
+    
+    my_expander = st.expander(label='Nutritient Distribution options :')
+    with my_expander:
+        # Sélectionner le nutriment à afficher
+        option = st.radio(
+            "Select a nutrient to display its distribution:",
+            ('Calories', 'Total Fat', 'Sugar', 'Sodium', 'Protein', 'Saturated Fat', 'Carbohydrates')
+        )
+        
+        # Créer un slider pour le nombre de bins
+        bins = st.slider("Select the number of bins:", min_value=10, max_value=50, value=20, step=5)
+
+    # Palette pour chaque nutriment
+    color_map = {
+        'Calories': 'orange',
+        'Total Fat': 'beige',
+        'Sugar': 'pink',
+        'Sodium': 'blue',
+        'Protein': 'green',
+        'Saturated Fat': 'purple',
+        'Carbohydrates': 'brown'
+    }
+    plt.figure(figsize=(10, 5), facecolor='#0F1116')
+    # Without grids
+    sns.set_theme(style='white')  
+    # Historgam with KDE cpurb
+    sns.histplot(clean_df[option], bins=bins, kde=True, color=color_map[option])
+    plt.xlabel(option, fontsize=14, color='white')
+    plt.ylabel('Frequency', fontsize=14, color='white')
+    plt.gca().set_facecolor('#0F1116')
+    sns.despine()
+    st.pyplot(plt)
+
+
+
+    # Section : Nutri score
+
+    # Convertir le Nutri-Score en valeurs numériques (si nécessaire)
+    nutri_score_mapping = {"A": 1, "B": 2, "C": 3, "D": 4, "E": 5}
+    clean_df["nutri_score_numeric"] = clean_df["nutri_score"].map(nutri_score_mapping)
+
+    nutri_score_colors = {
+    "A": "lightgreen",  # Vert pastel
+    "B": "palegreen",   # Vert clair
+    "C": "orange",      # Orange pastel
+    "D": "lightsalmon", # Rouge clair
+    "E": "lightcoral"   # Rouge pastel
+    }
+    fig = px.scatter(
+    clean_df,
+    x="nutri_score_numeric",  # Numérique pour Nutri-Score
+    y="num_comments",         # Nombre de commentaires
+    size="avg_ratings",       # Taille basée sur la moyenne des évaluations
+    color="nutri_score",      # Couleur basée sur le Nutri-Score
+    color_discrete_map=nutri_score_colors,  # Appliquer la palette définie
+    title="Relation entre Nutri-Score et Nombre de Commentaires",
+    labels={"nutri_score_numeric": "Nutri-Score", "num_comments": "Nombre de Commentaires"},
+    )
+
+    # Afficher le graphique dans Streamlit
+    st.plotly_chart(fig, use_container_width=True)
+        

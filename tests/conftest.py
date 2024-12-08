@@ -92,6 +92,91 @@ def column_merge_data():
     df_source = pd.DataFrame({'key': [1, 2, 4], 'extra': ['X', 'Y', 'Z']})
     return df_target, df_source
 
+
+@pytest.fixture
+def recipes_table():
+    """
+    Provides a sample DataFrame for testing recipe data by user.
+
+    This fixture creates a DataFrame with recipe data that includes:
+    - contributor_id
+    - name: name of the recipe.
+    - rating: rating given to each recipe.
+
+    Args:  
+        None
+
+    Returns:
+        pd.DataFrame: A DataFrame containing recipe data with the following columns:
+            - 'contributor_id' (int)
+            - 'name' (str)
+            - 'rating' (int)
+    """
+    data = pd.DataFrame({
+        'contributor_id': [47892, 47892, 12345],  # Contributor IDs
+        'name': ['Recipe1', 'Recipe2', 'Recipe1'],  # Recipe names
+        'rating': [5, 4, 3]  # Ratings for each recipe
+    })
+    return data
+
+    
+@pytest.fixture
+def top_recipes_data():
+    """
+    Provides a sample DataFrame for testing top recipes by user.
+
+    This fixture creates a DataFrame representing recipes created by users. It includes:
+    - user_id
+    - name: name of the recipe.
+
+    Args:  
+        None
+
+    Returns:
+        pd.DataFrame: A DataFrame containing user recipe data with the following columns:
+            - 'user_id' (int)
+            - 'name' (str)
+    """
+    data = {
+        'user_id': [1, 1, 1, 2, 2, 3, 3],  # User IDs associated with the recipes
+        'name': ['Recipe A', 'Recipe B', 'Recipe A', 'Recipe C', 'Recipe D', 'Recipe E', 'Recipe A'],  # Recipe names
+        'rating': [4, 3, 5, 4, 5, 5, 5]
+    }
+    return pd.DataFrame(data)
+
+
+@pytest.fixture
+def nutriments_data():
+    """
+    Provides a sample of a row of a DataFrame for testing the calcul of the nutri-socre
+
+    This fixture creates a dictionnary representing the nutrients of 1 recipe
+    - Calories 
+    - Sugar 
+    - Saturated Fat
+    - Sodium
+    - Protein
+
+    Args:  
+        None
+
+    Returns:
+        A Dictionnary containing the nutrients of 1 recipe.
+            - "Calories" (float)
+            - "Sugar" (float)
+            - "Saturated_Fat" (float)
+            - "Sodium" (flaoa)
+            - "Protein" (float)
+    """
+    data = {
+        'Calories': 335.0, 
+        'Sugar': 4.5, 
+        'Saturated Fat': 1.0, 
+        'Sodium': 90.0, 
+        'Protein': 10.0 
+    }
+    return data
+
 @pytest.fixture
 def outliers_sample():
     """

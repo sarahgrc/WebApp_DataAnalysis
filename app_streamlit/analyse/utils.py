@@ -371,20 +371,185 @@ def user_recipes(merged_df, user_id):
         dict: Recipe counts per season.
     """
 
-    recipes_user_df=merged_df.loc[merged_df["contributor_id"]==user_id]
-    return recipes_user_df
+    recipes_user_df = merged_df.loc[merged_df["contributor_id"] == user_id]
+    return recipes_user_df 
 
-def count_recipes_per_user(df):
+
+def calculate_negative_points_nutri_score(row):
     """
-    Count the number of unique recipes per user.
+    Calculate the negative points that will lower the Nutri-Score based on 
+    the levels of certain nutrients: calories, sugar, saturated fat, and sodium.
 
     Args:
-        df (pd.DataFrame): DataFrame containing 'recipe_id' and 'contributor_id'.
+        row (dict): row from a DataFrame representing nutrition of the recipe.
 
     Returns:
-        pd.Series: Series with contributor IDs as index and recipe counts as values.
+        int: The total negative points calculated based on the thresholds for the given nutrients.
     """
-    return df.groupby('contributor_id')['recipe_id'].nunique()
+    # Calories
+    if row["Calories"] <= 335: calories_points = 0
+    elif row["Calories"] <= 670: calories_points = 1
+    elif row["Calories"] <= 1005: calories_points = 2
+    elif row["Calories"] <= 1340: calories_points = 3
+    elif row["Calories"] <= 1675: calories_points = 4
+    elif row["Calories"] <= 2010: calories_points = 5
+    elif row["Calories"] <= 2345: calories_points = 6
+    elif row["Calories"] <= 2680: calories_points = 7
+    elif row["Calories"] <= 3015: calories_points = 8
+    elif row["Calories"] <= 3350: calories_points = 9
+    else: calories_points = 10
+
+    # Sucres
+    if row["Sugar"] <= 4.5: sugar_points = 0
+    elif row["Sugar"] <= 9: sugar_points = 1
+    elif row["Sugar"] <= 13.5: sugar_points = 2
+    elif row["Sugar"] <= 18: sugar_points = 3
+    elif row["Sugar"] <= 22.5: sugar_points = 4
+    elif row["Sugar"] <= 27: sugar_points = 5
+    elif row["Sugar"] <= 31: sugar_points = 6
+    elif row["Sugar"] <= 36: sugar_points = 7
+    elif row["Sugar"] <= 40: sugar_points = 8
+    elif row["Sugar"] <= 45: sugar_points = 9
+    else: sugar_points = 10
+
+    # Graisses saturées
+    if row["Saturated Fat"] <= 1: fat_points = 0
+    elif row["Saturated Fat"] <= 2: fat_points = 1
+    elif row["Saturated Fat"] <= 3: fat_points = 2
+    elif row["Saturated Fat"] <= 4: fat_points = 3
+    elif row["Saturated Fat"] <= 5: fat_points = 4
+    elif row["Saturated Fat"] <= 6: fat_points = 5
+    elif row["Saturated Fat"] <= 7: fat_points = 6
+    elif row["Saturated Fat"] <= 8: fat_points = 7
+    elif row["Saturated Fat"] <= 9: fat_points = 8
+    elif row["Saturated Fat"] <= 10: fat_points = 9
+    else: fat_points = 10
+
+    # Sodium
+    if row["Sodium"] <= 90: sodium_points = 0
+    elif row["Sodium"] <= 180: sodium_points = 1
+    elif row["Sodium"] <= 270: sodium_points = 2
+    elif row["Sodium"] <= 360: sodium_points = 3
+    elif row["Sodium"] <= 450: sodium_points = 4
+    elif row["Sodium"] <= 540: sodium_points = 5
+    elif row["Sodium"] <= 630: sodium_points = 6
+    elif row["Sodium"] <= 720: sodium_points = 7
+    elif row["Sodium"] <= 810: sodium_points = 8
+    elif row["Sodium"] <= 900: sodium_points = 9
+    else: sodium_points = 10
+
+    return calories_points + sugar_points + fat_points + sodium_points
+
+def calculate_positive_points_nutri_score(row):
+    """
+    Calculate the positive points that will improve the Nutri-Score based on 
+    the level of protein in the food.
+
+    Args:
+        row (dict): row from a DataFrame representing a food item. 
+
+    Returns:
+        int: The total positive points calculated based on the protein thresholds.
+    """
+    if row["Protein"] <= 1.6: protein_points = 0
+    elif row["Protein"] <= 3.2: protein_points = 1
+    elif row["Protein"] <= 4.8: protein_points = 2
+    elif row["Protein"] <= 6.4: protein_points = 3
+    elif row["Protein"] <= 8: protein_points = 4
+    else: protein_points = 5
+
+    return protein_points
+
+def nutri_score(df):
+    """
+    Calculate the overall Nutri-Score (A to E) for a food item by considering both 
+    negative and positive points. 
+
+    Args:
+        df : DataFrame representing a food item. 
+                    It should include keys required for both negative and positive point 
+                    calculations: "Calories", "Sugar", "Saturated Fat", "Sodium", and "Protein".
+
+    Returns:
+        str: The Nutri-Score grade (A, B, C, D, or E) based on the calculated score.
+    """
+    negative_points = calculate_negative_points_nutri_score(df)
+    positive_points = calculate_positive_points_nutri_score(df)
+    score = negative_points - positive_points
+
+    # Conversion Nutri-Score
+    if score <= -1:
+        return "A"
+    elif 0 <= score <= 2:
+        return "B"
+    elif 3 <= score <= 10:
+        return "C"
+    elif 11 <= score <= 18:
+        return "D"
+    else:
+        return "E"
+    
+    
+    
+
+def top_recipes_user(df):
+    """
+    Returns the top 5 recipes with the most comments from a specific user.
+
+    Args:
+        df : pandas.DataFrame
+            DataFrame with these columns:
+            - 'user_id': user IDs
+            - 'name': recipe names.
+            - 'avg_rating': average rating.
+            - 'number_comments': number of comments.
+
+    Returns:
+        pandas.DataFrame
+            A DataFrame with:
+            - 'Recipe': recipe names.
+            - 'Number of comments': count of comments per recipe.
+            - 'Mean Rating': average rating for each recipe.
+    """
+    
+    filtered_df = df[df['name'].notna()]
+    top_user_recipe = filtered_df[['name', 'num_comments', 'avg_ratings']].sort_values(
+        by='num_comments', ascending=False
+    ).head(5)
+
+    top_user_recipe = top_user_recipe.rename(
+        columns={'name': 'Recipe', 'num_comments': 'Number of comments', 'avg_ratings': 'Average Rating'}
+    )
+
+    return top_user_recipe
+
+
+def top_recipes(df):
+    """
+    Returns the top 5 recipes with the most comments.
+
+    Args:
+        df : pandas.DataFrame
+            DataFrame with all the preprocessed data
+
+    Returns:
+        pandas.DataFrame
+    """
+# Filtrer les recettes où 'name' n'est pas NaN
+    filtered_df = df[df['name'].notna()]
+    
+    # S'assurer que toutes les valeurs de 'name' sont valides
+    assert filtered_df['name'].isna().sum() == 0, "Filtered DataFrame still contains NaN in 'name'"
+    
+    # Top 5 commented recipes
+    top_recipe_df = filtered_df[['name', 'num_comments', 'avg_ratings']].sort_values(
+        by='num_comments', ascending=False
+    ).head(5)
+    top_recipe_df = top_recipe_df.rename(
+        columns={'name': 'Recipe', 'num_comments': 'Number of comments', 'avg_ratings': 'Avg Rating'}
+    )
+
+    return top_recipe_df
 
 
 # FIXME =============== up to data preprocess ?
