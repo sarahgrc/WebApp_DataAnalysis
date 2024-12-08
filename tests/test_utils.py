@@ -2,6 +2,7 @@ import pytest
 import pandas as pd
 from app_streamlit.analyse.utils import * 
 
+
 def test_metrics_main_contributor(sample_raw_recipes):
     """
     Test that metrics_main_contributor returns the correct number of unique contributors and recipes.
@@ -75,3 +76,35 @@ def test_get_top_ingredients2(sample_raw_recipes):
     assert len(result) <= 5
     assert all(isinstance(ingredient, str) for ingredient in result.index)
     assert 'salt' not in result.index
+
+def test_user_recipes(recipes_table):
+    # Get recipes for the specific user
+    user_recipes_df = user_recipes(recipes_table, 47892)
+
+    # Check the 'name' column contains the correct recipe names
+    assert list(user_recipes_df['name']) == ["Recipe1", "Recipe2"]  # Ensure names match exactly
+
+
+# Test for the top_recipes_user function
+def test_top_recipes_user(sample_raw_recipes):
+    """
+    Test the `top_recipes_user` function with the sample_raw_recipes dataset.
+    """
+    # Appeler la fonction avec le DataFrame sample_raw_recipes
+    top_results_by_user = top_recipes_user(sample_raw_recipes)
+
+    # Vérifiez que la sortie est un DataFrame
+    assert isinstance(top_results_by_user, pd.DataFrame), "Le résultat doit être un DataFrame"
+    assert 'Recipe' in top_results_by_user.columns, "Le DataFrame doit contenir une colonne 'Recipe'"
+    assert 'Number of comments' in top_results_by_user.columns, "Le DataFrame doit contenir une colonne 'Number of comments'"
+    assert 'Average Rating' in top_results_by_user.columns, "Le DataFrame doit contenir une colonne 'Average Rating'"
+
+    # Vérifiez les résultats attendus
+    assert top_results_by_user.shape[0] <= 5, "Il ne doit pas y avoir plus de 5 recettes dans le résultat"
+
+    # Assurez-vous que les recettes sont triées correctement
+    assert top_results_by_user['Number of comments'].is_monotonic_decreasing, \
+        "Les résultats doivent être triés par nombre de commentaires décroissants"
+
+def test_nutri_score(nutriments_data):
+    assert nutri_score(nutriments_data) == "A"

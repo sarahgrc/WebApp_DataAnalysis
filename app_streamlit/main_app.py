@@ -46,14 +46,31 @@ def download_extract_zip(gdrive_url, out_dir):
 
 
 
+
+#wrapper functions for pages
+def display_recipes_page_wrapper():
+    display_recipes_page(st.session_state.clean_df) 
+
+def display_profile_page_wrapper():
+    display_profile_page(st.session_state.clean_df)
+
+def display_contributors_page_wrapper():
+    display_contributors_page(st.session_state.clean_df)
+
 # Define the main function
 def main():
     """
     Display the main page of the web app
     
     """
-    
+
     clean_df = st.session_state.clean_df  # Retrieve the data from session state
+
+    
+    print("Main page")
+    missing_recipes = clean_df[clean_df['name'].isna()]
+    print(missing_recipes)
+    print(missing_recipes.shape)
 
     # Show login message if not logged in
     if not st.session_state.logged_in:
@@ -63,27 +80,27 @@ def main():
         if st.button("Log in"):
             st.session_state.logged_in = True  # Set login state
     else:
-        # Sidebar navigation
-        st.sidebar.title("Navigation")
-        page = st.sidebar.radio(
-            "Select a page",
-            ["Menu", "Contributors", "Recipes", "Profile"]
-        )
+        # Show account and report pages if logged in
+        menu_page = st.Page(display_menu_page, title="Menu", icon=":material/thumb_up:")
+        contributors_page = st.Page(display_contributors_page_wrapper, title="Contributors", icon=":material/dashboard:")
+        recipes_page = st.Page(display_recipes_page_wrapper,  title="Recipes", icon=":material/dashboard:")
+        profile_page = st.Page(display_profile_page_wrapper, title="Your profile", icon=":material/dashboard:")
+        pg = st.navigation([menu_page, contributors_page, recipes_page, profile_page])
 
-        # Page display logic
-        if page == "Menu":
-            display_menu_page()
-        elif page == "Contributors":
-            display_contributors_page(clean_df)
-        elif page == "Recipes":
-            display_recipes_page()
-        elif page == "Profile":
-            display_profile_page(clean_df)
+        # Run the navigation
+        pg.run()
 
 if __name__ == "__main__":
     
     download_extract_zip(download_url, folder_storage)
     
+    if "clean_df" not in st.session_state:
+    # Executed only once per session
+      df = DataFrameLoadder(path_raw_interaction='./data_files/RAW_interactions.csv',
+                            path_raw_recipes='./data_files/RAW_recipes.csv',
+                            pp_recipe='./data_files/PP_recipes.csv').load()
+      st.session_state.clean_df = df
+      
     # Set the page configuration
     st.set_page_config(page_title="Data Manager", page_icon=":material/edit:")
 

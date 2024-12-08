@@ -8,7 +8,6 @@ import seaborn as sns
 
 
 
-
 def metrics_main_contributor(df):
     """
     Calculate the total number of unique contributors and recipes in the dataset.
@@ -22,6 +21,7 @@ def metrics_main_contributor(df):
     num_contributors = df['contributor_id'].nunique()
     num_recipes = df['recipe_id'].nunique()
     return num_contributors, num_recipes
+
 
 def average_and_total_comments_per_contributor(df):
     """
@@ -116,74 +116,6 @@ def count_contributors_by_recipe_range_with_bins(df):
     stats = stats.sort_values(by='avg_comments_per_recipe', ascending=False)
     return stats
 
-def top_commented_recipes_by_contributors(df, top_contributors, max_recipes_per_contributor=5):
-    """
-    Extract top commented recipes for each contributor in the top contributors list.
-
-    Args:
-        df (pd.DataFrame): DataFrame containing recipe data.
-        top_contributors (pd.DataFrame): DataFrame of top contributors.
-        max_recipes_per_contributor (int): Maximum number of recipes per contributor.
-
-    Returns:
-        pd.DataFrame: DataFrame containing contributor IDs, recipe IDs, names, and number of comments.
-    """
-    required_columns = {'contributor_id', 'recipe_id', 'name', 'num_comments'}
-    if not required_columns.issubset(df.columns):
-        raise ValueError(f"The DataFrame must contain columns: {required_columns}.")
-
-    df['contributor_id'] = df['contributor_id'].astype(str)
-    top_contributors['contributor_id'] = top_contributors['contributor_id'].astype(str)
-
-    filtered_df = df[df['contributor_id'].isin(top_contributors['contributor_id'])]
-    filtered_df = filtered_df.sort_values(by='num_comments', ascending=False)
-
-
-    top_recipes = (
-        filtered_df.groupby('contributor_id')
-        .head(max_recipes_per_contributor)
-        .reset_index(drop=True)
-    )
-
-    return top_recipes[['contributor_id', 'recipe_id', 'name', 'num_comments']]
-
-    # Garder uniquement les colonnes 'contributor_id', 'recipe_id' et 'num_comments'
-    result = top_recipes[['contributor_id', 'recipe_id', 'num_comments','name']]
-
-    return result
-
-def top_commented_recipes_by_contributors(df, top_contributors, max_recipes_per_contributor=5):
-    """
-    Extracts the top commented recipes for each contributor in the top contributors list.
-
-    Parameters:
-    - df (pd.DataFrame): The DataFrame containing recipe data.
-    - top_contributors (pd.DataFrame): A DataFrame containing the IDs of the top contributors.
-    - max_recipes_per_contributor (int): Maximum number of recipes to return per contributor.
-
-    Returns:
-    - pd.DataFrame: A DataFrame containing contributor IDs, recipe IDs, names, and number of comments.
-    """
-    # Vérifier les colonnes nécessaires
-    if not {'contributor_id', 'recipe_id', 'name', 'num_comments'}.issubset(df.columns):
-        raise ValueError("Le DataFrame doit contenir les colonnes 'contributor_id', 'recipe_id', 'name', et 'num_comments'.")
-    
-    # Filtrer les recettes appartenant aux top contributeurs
-    filtered_df = df[df['contributor_id'].isin(top_contributors['contributor_id'])]
-    
-    # Trier les recettes par nombre de commentaires
-    filtered_df = filtered_df.sort_values(by='num_comments', ascending=False)
-    
-    # Limiter le nombre de recettes par contributeur
-    top_recipes = (
-        filtered_df.groupby('contributor_id')
-        .head(max_recipes_per_contributor)
-        .reset_index(drop=True)
-    )
-    
-    # Sélectionner les colonnes pertinentes
-    return top_recipes[['contributor_id', 'recipe_id', 'name', 'num_comments']]
-
 def count_contributors_by_recipe_range_with_bins(df):
     """
     Categorize contributors based on the number of unique recipes they contributed.
@@ -200,6 +132,7 @@ def count_contributors_by_recipe_range_with_bins(df):
 
     binned_counts = pd.cut(recipe_counts, bins=bins, labels=labels, right=True)
     return binned_counts.value_counts().sort_index()
+
 
 def top_commented_recipes(df, top_n=10):
     """
@@ -218,67 +151,61 @@ def top_commented_recipes(df, top_n=10):
 
 def get_top_tags(df, most_commented=False, top_recipes=20, top_n=10):
     """
-    Retrieve the most frequently used tags.
+    Returns the most frequently used tags either for all recipes or for the top most commented recipes.
 
-    Args:
-        df (pd.DataFrame): DataFrame containing recipe data.
-        most_commented (bool): Whether to filter by the most commented recipes.
-        top_recipes (int): Number of top recipes to consider if most_commented is True.
-        top_n (int): Number of tags to return.
+    Parameters:
+    - df (pd.DataFrame): A DataFrame containing recipe data.
+    - most_commented (bool): If True, only consider the most commented recipes.
+    - top_recipes (int): Number of most commented recipes to consider (used only if most_commented=True).
+    - top_n (int): Number of most frequent tags to return.
 
     Returns:
-        pd.Series: Top N most frequently used tags.
+    - pd.Series: The `top_n` most frequently used tags.
     """
+
     if most_commented:
-        most_commented_df = df.sort_values(by='num_comments', ascending=False).head(top_recipes)
-        filtered_df = df[df['recipe_id'].isin(most_commented_df['recipe_id'])]
+        most_commented = df.sort_values(by='num_comments', ascending=False).head(top_recipes)
+        filtered_df = df[df['recipe_id'].isin(most_commented['recipe_id'])]
     else:
         filtered_df = df
 
+    def parse_tags(tag_str):
+        if isinstance(tag_str, str):
+            tag_str = tag_str.strip('[]')
+            return [tag.strip(' "') for tag in tag_str.split(',')]
+        return []
+
+    filtered_df['tags'] = filtered_df['tags'].apply(parse_tags)
     tags_series = filtered_df['tags'].explode()
-    return tags_series.value_counts().head(top_n)
+    top_tags = tags_series.value_counts().head(top_n)
+
+    return top_tags
 
 def get_top_ingredients2(df, df_ingr_map, excluded_ingredients=None, top_n=10):
-    """
-    Find the most frequently used ingredients, excluding common ones.
-
-    Args:
-        df (pd.DataFrame): DataFrame with recipe data.
-        df_ingr_map (pd.DataFrame): DataFrame mapping ingredient IDs to their names.
-        excluded_ingredients (set, optional): Ingredients to exclude.
-        top_n (int): Number of top ingredients to return.
-
-    Returns:
-        pd.Series: Top N ingredients and their counts.
-    """
     ingr_map = df_ingr_map.set_index('id')['replaced'].to_dict()
-
-    def map_ingredient_ids(ids):
-        if pd.isna(ids):
-            return []
-        try:
-            return [ingr_map.get(int(ingr_id), 'Unknown') for ingr_id in ast.literal_eval(ids)]
-        except (ValueError, SyntaxError):
-            return []
-
-    df['mapped_ingredients'] = df['ingredient_ids'].apply(map_ingredient_ids)
-
+    def parse_ingredient_ids(ids, ingr_map):
+        if isinstance(ids, str):
+            ids = ids.strip('[]')
+            try:
+                return [ingr_map.get(int(ingr.strip()), 'Unknown') for ingr in ids.split(',') if ingr.strip()]
+            except ValueError:
+                return []
+        return []
+    df['mapped_ingredients'] = df['ingredient_ids'].apply(lambda ids: parse_ingredient_ids(ids, ingr_map))
     if excluded_ingredients is None:
         excluded_ingredients = {
             'black pepper', 'vegetable oil', 'salt', 'pepper', 'olive oil',
             'butter', 'water', 'sugar', 'flour', 'brown sugar',
         }
-
-    filtered_ingredients = (
-        df['mapped_ingredients']
+    filtered_ingredients = (df['mapped_ingredients']
         .explode()
         .loc[lambda x: ~x.isin(excluded_ingredients)]
         .value_counts()
         .head(top_n)
     )
-
-
     return filtered_ingredients
+
+
 """
 def count_recipes_season(df):
     
@@ -371,20 +298,182 @@ def user_recipes(merged_df, user_id):
         dict: Recipe counts per season.
     """
 
-    recipes_user_df=merged_df.loc[merged_df["contributor_id"]==user_id]
-    return recipes_user_df
+    recipes_user_df = merged_df.loc[merged_df["contributor_id"] == user_id]
+    return recipes_user_df 
 
-def count_recipes_per_user(df):
+
+def calculate_negative_points_nutri_score(row):
     """
-    Count the number of unique recipes per user.
+    Calculate the negative points that will lower the Nutri-Score based on 
+    the levels of certain nutrients: calories, sugar, saturated fat, and sodium.
 
     Args:
-        df (pd.DataFrame): DataFrame containing 'recipe_id' and 'contributor_id'.
+        row (dict): row from a DataFrame representing nutrition of the recipe.
 
     Returns:
-        pd.Series: Series with contributor IDs as index and recipe counts as values.
+        int: The total negative points calculated based on the thresholds for the given nutrients.
     """
-    return df.groupby('contributor_id')['recipe_id'].nunique()
+    # Calories
+    if row["Calories"] <= 335: calories_points = 0
+    elif row["Calories"] <= 670: calories_points = 1
+    elif row["Calories"] <= 1005: calories_points = 2
+    elif row["Calories"] <= 1340: calories_points = 3
+    elif row["Calories"] <= 1675: calories_points = 4
+    elif row["Calories"] <= 2010: calories_points = 5
+    elif row["Calories"] <= 2345: calories_points = 6
+    elif row["Calories"] <= 2680: calories_points = 7
+    elif row["Calories"] <= 3015: calories_points = 8
+    elif row["Calories"] <= 3350: calories_points = 9
+    else: calories_points = 10
+
+    # Sucres
+    if row["Sugar"] <= 4.5: sugar_points = 0
+    elif row["Sugar"] <= 9: sugar_points = 1
+    elif row["Sugar"] <= 13.5: sugar_points = 2
+    elif row["Sugar"] <= 18: sugar_points = 3
+    elif row["Sugar"] <= 22.5: sugar_points = 4
+    elif row["Sugar"] <= 27: sugar_points = 5
+    elif row["Sugar"] <= 31: sugar_points = 6
+    elif row["Sugar"] <= 36: sugar_points = 7
+    elif row["Sugar"] <= 40: sugar_points = 8
+    elif row["Sugar"] <= 45: sugar_points = 9
+    else: sugar_points = 10
+
+    # Graisses saturées
+    if row["Saturated Fat"] <= 1: fat_points = 0
+    elif row["Saturated Fat"] <= 2: fat_points = 1
+    elif row["Saturated Fat"] <= 3: fat_points = 2
+    elif row["Saturated Fat"] <= 4: fat_points = 3
+    elif row["Saturated Fat"] <= 5: fat_points = 4
+    elif row["Saturated Fat"] <= 6: fat_points = 5
+    elif row["Saturated Fat"] <= 7: fat_points = 6
+    elif row["Saturated Fat"] <= 8: fat_points = 7
+    elif row["Saturated Fat"] <= 9: fat_points = 8
+    elif row["Saturated Fat"] <= 10: fat_points = 9
+    else: fat_points = 10
+
+    # Sodium
+    if row["Sodium"] <= 90: sodium_points = 0
+    elif row["Sodium"] <= 180: sodium_points = 1
+    elif row["Sodium"] <= 270: sodium_points = 2
+    elif row["Sodium"] <= 360: sodium_points = 3
+    elif row["Sodium"] <= 450: sodium_points = 4
+    elif row["Sodium"] <= 540: sodium_points = 5
+    elif row["Sodium"] <= 630: sodium_points = 6
+    elif row["Sodium"] <= 720: sodium_points = 7
+    elif row["Sodium"] <= 810: sodium_points = 8
+    elif row["Sodium"] <= 900: sodium_points = 9
+    else: sodium_points = 10
+
+    return calories_points + sugar_points + fat_points + sodium_points
+
+def calculate_positive_points_nutri_score(row):
+    """
+    Calculate the positive points that will improve the Nutri-Score based on 
+    the level of protein in the food.
+
+    Args:
+        row (dict): row from a DataFrame representing a food item. 
+
+    Returns:
+        int: The total positive points calculated based on the protein thresholds.
+    """
+    if row["Protein"] <= 1.6: protein_points = 0
+    elif row["Protein"] <= 3.2: protein_points = 1
+    elif row["Protein"] <= 4.8: protein_points = 2
+    elif row["Protein"] <= 6.4: protein_points = 3
+    elif row["Protein"] <= 8: protein_points = 4
+    else: protein_points = 5
+
+    return protein_points
+
+def nutri_score(df):
+    """
+    Calculate the overall Nutri-Score (A to E) for a food item by considering both 
+    negative and positive points. 
+
+    Args:
+        df : DataFrame representing a food item. 
+                    It should include keys required for both negative and positive point 
+                    calculations: "Calories", "Sugar", "Saturated Fat", "Sodium", and "Protein".
+
+    Returns:
+        str: The Nutri-Score grade (A, B, C, D, or E) based on the calculated score.
+    """
+    negative_points = calculate_negative_points_nutri_score(df)
+    positive_points = calculate_positive_points_nutri_score(df)
+    score = negative_points - positive_points
+
+    # Conversion Nutri-Score
+    if score <= -1:
+        return "A"
+    elif 0 <= score <= 2:
+        return "B"
+    elif 3 <= score <= 10:
+        return "C"
+    elif 11 <= score <= 18:
+        return "D"
+    else:
+        return "E"
+    
+def top_recipes_user(df):
+    """
+    Returns the top 5 recipes with the most comments from a specific user.
+
+    Args:
+        df : pandas.DataFrame
+            DataFrame with these columns:
+            - 'name': recipe names.
+            - 'avg_ratings': average rating.
+            - 'num_comments': number of comments.
+
+    Returns:
+        pandas.DataFrame
+            A DataFrame with:
+            - 'Recipe': recipe names.
+            - 'Number of comments': count of comments per recipe.
+            - 'Average Rating': average rating for each recipe.
+    """
+    # Filtrer les recettes valides
+    filtered_df = df[df['name'].notna()]
+
+    # Sélectionner les colonnes nécessaires et trier
+    top_user_recipe = filtered_df[['name', 'num_comments', 'avg_ratings']].sort_values(
+        by=['num_comments', 'avg_ratings'], ascending=[False, False]
+    ).head(5)
+
+    # Renommer les colonnes pour une meilleure lisibilité
+    top_user_recipe = top_user_recipe.rename(
+        columns={'name': 'Recipe', 'num_comments': 'Number of comments', 'avg_ratings': 'Average Rating'}
+    )
+
+    return top_user_recipe
+
+
+
+def top_recipes(df):
+    """
+    Returns the top 5 recipes with the most comments.
+
+    Args:
+        df : pandas.DataFrame
+            DataFrame with all the preprocessed data
+
+    Returns:
+        pandas.DataFrame
+    """
+    filtered_df = df[df['name'].notna()]
+    assert filtered_df['name'].isna().sum() == 0, "Filtered DataFrame still contains NaN in 'name'"
+    
+    # Top 5 commented recipes
+    top_recipe_df = filtered_df[['name', 'num_comments', 'avg_ratings']].sort_values(
+        by='num_comments', ascending=False
+    ).head(5)
+    top_recipe_df = top_recipe_df.rename(
+        columns={'name': 'Recipe', 'num_comments': 'Number of comments', 'avg_ratings': 'Avg Rating'}
+    )
+
+    return top_recipe_df
 
 
 # FIXME =============== up to data preprocess ?
@@ -416,7 +505,7 @@ def best_recipe_filter_time(df, time_r, nb_show):
     Get information about the best recipes (ranking-higher comments) filtered on time of preparation
 
     args:
-        df : pd.DataFrame : dataframe containing columns 'minutes','name', 'n_steps', 'num_comments', 'ingredients','avg_reviews'
+        df : pd.DataFrame : dataframe containing columns 'minutes','name', 'n_steps', 'num_comments', 'ingredients','avg_ratingss'
         time_r : str : time of preparation (categorie) we want to filter results on 
         nb_show : int : number of recipes to show
 
@@ -434,7 +523,7 @@ def best_recipe_filter_time(df, time_r, nb_show):
         df['minutes_tr'] = cat_minutes(df)
     df = df[df['minutes_tr'] == time_r]
 
-    result = df[df['avg_reviews'] == 5][['name', 'n_steps', 'num_comments', 'ingredients','avg_reviews']]
+    result = df[df['avg_ratings'] == 5][['name', 'n_steps', 'num_comments', 'ingredients','avg_ratings']]
     result = result.sort_values(by='num_comments', ascending=False).head(nb_show)
     
     return result
@@ -455,7 +544,7 @@ def get_insight_low_ranking(df):
         df['minutes_tr'] = cat_minutes(df)
 
     # filter low ranking - insight on time preparation
-    df_low_rating = df[df['avg_reviews'].isin([1, 2])]
+    df_low_rating = df[df['avg_ratings'].isin([1, 2])]
     df_low_count = df_low_rating.groupby(
         ['minutes_tr']).size().reset_index(name='count')
     l_low = np.sum(df_low_count['count'])
@@ -474,8 +563,8 @@ def visualise_recipe_season(df):
     """Visualise count per season with low and high rankings."""
     
     # Filter for high and low rankings
-    df_high = df[df['avg_reviews'].isin([4, 5])]
-    df_low = df[df['avg_reviews'].isin([1, 2, 3])]
+    df_high = df[df['avg_ratings'].isin([4, 5])]
+    df_low = df[df['avg_ratings'].isin([1, 2, 3])]
     
     # Count recipes per season
     count_data_high = df_high.groupby(['season']).size().reset_index(name='count')
