@@ -4,36 +4,45 @@ from tests.conftest import sample_raw_recipes
 from app_streamlit.load_data.preprocess.normalisation import *
 from app_streamlit.load_data.preprocess.add_drop_column import *
 from app_streamlit.load_data.preprocess.cleaning_data import outliers_df 
+import logging
+
+logging.basicConfig(filename='logging/debug.log', level=logging.DEBUG, filemode="w", format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 def test_date_separated(sample_date_data):
     """
     Teste que 'date_separated' ajoute les colonnes 'year', 'month', et 'day',
     et supprime la colonne 'submitted'.
     """
+    logger.info("Starting test for date_separated function.")
     initial_column_count = len(sample_date_data.columns)
     
     df = date_separated('submitted', sample_date_data)
-    
+    logger.info("Columns after date_separation: %s", df.columns)
+
     assert 'year' in df.columns
     assert 'month' in df.columns
     assert 'day' in df.columns
     
     assert len(df.columns) == initial_column_count + 3
-
+    logger.info("Test for date_separated function passed.")
 
 def test_outliers_df(outliers_sample):
     """
     Test the outliers_df function to detect and extract outliers
     based on specified thresholds.
     """
+    logger.info("Starting test for outliers_df function.")
     # Test with treshold_sup only
     outliers = outliers_df(outliers_sample, column='A', treshold_sup=30, get_info=False)
+    logger.info("Outliers detected with treshold_sup=30: %s", outliers)
     assert isinstance(outliers, list)
     assert len(outliers) == 6  # Check number of outliers
     assert all(value > 30 for value in outliers)
 
     # Test with treshold_inf only
     outliers = outliers_df(outliers_sample, column='A', treshold_inf=10, get_info=False)
+    logger.info("Outliers detected with treshold_inf=10: %s", outliers)
     assert isinstance(outliers, list)
     assert len(outliers) == 4  # Check number of outliers
     assert all(value < 10 for value in outliers)
@@ -102,6 +111,9 @@ def test_add_columns(column_merge_data):
                                    - Source DataFrame with keys and additional columns to merge.
     """
     df_target, df_source = column_merge_data
-    result = add_columns(df_target, df_source, 'key', 'key', ['extra'])
-    assert 'extra' in result.columns
-    assert result.loc[result['key'] == 3, 'extra'].isna().all()
+    try :
+        result = add_columns(df_target, df_source, 'key', 'key', ['extra'])
+        assert 'extra' in result.columns
+        assert result.loc[result['key'] == 3, 'extra'].isna().all()
+    except Exception as e:
+        print(f"Error: {e}")

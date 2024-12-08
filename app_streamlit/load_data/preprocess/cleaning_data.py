@@ -1,82 +1,110 @@
 import pandas as pd
+import logging
 import copy
 
-def outliers_df(dataframe, column,treshold_sup=None, treshold_inf=None, get_info=False):
+logging.basicConfig(
+    filename='logging/debug.log',
+    level=logging.DEBUG,
+    filemode='w',
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+
+def outliers_df(dataframe, column, treshold_sup=None, treshold_inf=None, get_info=False):
     """
-    function that returns a list of all outliers in a column depending on the treshold
-    
+    Function that returns a list of all outliers in a column depending on the threshold.
+
     Args:
-        dataframe : 
+        dataframe : pandas.DataFrame
         column (string) : name of the column
-        treshold_sup (int,float, optional): treshold for the outliers superior to a value. Defaults to None.
-        treshold_inf (int,float, optional): treshold for the outliers inferior to a value. Defaults to None.
-        get_info (bool, optional): _description_. Defaults to False.
+        treshold_sup (int,float, optional): threshold for the outliers superior to a value. Defaults to None.
+        treshold_inf (int,float, optional): threshold for the outliers inferior to a value. Defaults to None.
+        get_info (bool, optional): If True, returns a dataframe with all outliers else just a list of outliers. Defaults to False.
 
     Returns:
-        outliers: if get_info is true then dataframe with all outliers else just a list of outliers 
+        outliers: DataFrame or list of outliers based on `get_info`.
     """
+    logging.info("Running outliers_df function")
+    logging.debug(f"Arguments: column={column}, treshold_sup={treshold_sup}, treshold_inf={treshold_inf}, get_info={get_info}")
 
-    #verification that treshold_sup is a value
+    # Verification of threshold_sup
     if treshold_sup is not None:
         if not isinstance(treshold_sup, (int, float)):
-            raise ValueError('treshold_sup must be an int or float')
-        
-    #verification that treshold_inf is a real value
+            logging.error("treshold_sup must be an int or float")
+
+    # Verification of threshold_inf
     if treshold_inf is not None:
         if not isinstance(treshold_inf, (int, float)):
-            raise ValueError('treshold_inf must be an int or float')
-    
-    if get_info : 
-        outliers=pd.DataFrame()
+            logging.error("treshold_inf must be an int or float")
+
+    if get_info:
+        outliers = pd.DataFrame()
         if treshold_sup is not None and treshold_inf is None:
-            outliers=dataframe.loc[(dataframe[column] > treshold_sup)]
+            outliers = dataframe.loc[(dataframe[column] > treshold_sup)]
         if treshold_sup is None and treshold_inf is not None:
-            outliers=dataframe.loc[(dataframe[column] < treshold_inf)]
+            outliers = dataframe.loc[(dataframe[column] < treshold_inf)]
         if treshold_sup is not None and treshold_inf is not None:
-            outliers=dataframe.loc[(dataframe[column] > treshold_sup) & (dataframe[column] < treshold_inf)]
+            outliers = dataframe.loc[(dataframe[column] > treshold_sup) & (dataframe[column] < treshold_inf)]
+        logging.info(f"Found {len(outliers)} outliers with get_info=True")
         return outliers
 
-    else :
-        outliers_sup=[]
-        outliers_inf=[]
+    else:
+        outliers_sup = []
+        outliers_inf = []
         for i in range(len(dataframe[column])):
-            if treshold_sup is not None :
-                if dataframe[column][i]>treshold_sup: outliers_sup.append(dataframe[column][i].item())
-            if treshold_inf is not None :
-                if dataframe[column][i]<treshold_inf: outliers_inf.append(dataframe[column][i].item())
-    
-        if len(outliers_sup)>0 and len(outliers_inf)>0: return outliers_sup,outliers_inf
-        elif len(outliers_sup)>0 : return outliers_sup
-        elif len(outliers_inf)>0 : return outliers_inf
-        else : print('There are no outliers for this column and this treshold')    
+            if treshold_sup is not None:
+                if dataframe[column][i] > treshold_sup:
+                    outliers_sup.append(dataframe[column][i].item())
+            if treshold_inf is not None:
+                if dataframe[column][i] < treshold_inf:
+                    outliers_inf.append(dataframe[column][i].item())
 
+        if len(outliers_sup) > 0 and len(outliers_inf) > 0:
+            logging.info(f"Found {len(outliers_sup)} upper outliers and {len(outliers_inf)} lower outliers")
+            return outliers_sup, outliers_inf
+        elif len(outliers_sup) > 0:
+            logging.info(f"Found {len(outliers_sup)} upper outliers")
+            return outliers_sup
+        elif len(outliers_inf) > 0:
+            logging.info(f"Found {len(outliers_inf)} lower outliers")
+            return outliers_inf
+        else:
+            logging.info("There are no outliers for this column and this threshold")
+            return []
 
-def date_separated(col_name,dataframe):
+def date_separated(col_name, dataframe):
     """
-    this function takes a column with a date in the string format YYYY-MM-DD and return 
-    the dataframe with 3 new columns for the day, month and year 
+    This function takes a column with a date in the string format YYYY-MM-DD and returns 
+    the dataframe with 3 new columns for the day, month, and year.
 
     Args:
-        col_name (string): name of the column with the date in the dataframe 
-        dataframe : name of the dataframe 
+        col_name (string): Name of the column with the date in the dataframe.
+        dataframe : pandas.DataFrame
 
     Returns:
-        dataframe : return the new dataframe with the addition of the extracted informations in 3 columns
+        dataframe : DataFrame with additional columns for day, month, and year.
     """
+    logging.info("Running date_separated function")
+    logging.debug(f"Arguments: col_name={col_name}")
 
-    #create a datatime object
-    df = dataframe.copy()
-    df[col_name] = pd.to_datetime(df[col_name])   
+    try:
+        df = dataframe.copy()
+        df[col_name] = pd.to_datetime(df[col_name])
 
-    #create three columns with the day, month and year 
-    df['day'] = df[col_name].dt.day
-    df['month'] = df[col_name].dt.month
-    df['year'] = df[col_name].dt.year
+        df['day'] = df[col_name].dt.day
+        df['month'] = df[col_name].dt.month
+        df['year'] = df[col_name].dt.year
 
-    return df
+        logging.info("Successfully added day, month, and year columns")
+        return df
+
+    except Exception as e:
+        logging.error(f"Error in date_separated: {e}")
+        raise
 
 def add_season(df):
     """ Add a season column to the dataset """
+    logging.info("Running add_season function")
+
     def get_season(month):
         if month in [12, 1, 2]:
             return 'winter'
@@ -87,7 +115,10 @@ def add_season(df):
         elif month in [9, 10, 11]:
             return 'autumn'
 
-    df['season'] = df['month'].map(get_season)
-    return df
-
-
+    try:
+        df['season'] = df['month'].map(get_season)
+        logging.info("Successfully added season column")
+        return df
+    except Exception as e:
+        logging.error(f"Error in add_season: {e}")
+        raise
