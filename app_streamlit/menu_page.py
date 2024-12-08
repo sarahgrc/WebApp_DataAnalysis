@@ -10,10 +10,9 @@ def display_menu_page():
     st.title("Recipe and User Data Analysis")
 
     # Get path of the images 
-    current_dir = os.path.dirname(__file__)
-    images_path = os.path.abspath(os.path.join(current_dir, "..", "images"))
-    image_1_path =os.path.join(images_path, "recette_1.png")
-    image_2_path =os.path.join(images_path, "recette_2.png")   
+    image_1_path = './images/Recette_1.png'
+    image_2_path = './images/Recette_2.png'
+     
     
     # Display images
     col1,col2 =st.columns(2, gap = 'small')
