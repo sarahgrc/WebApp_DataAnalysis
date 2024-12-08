@@ -100,9 +100,9 @@ if __name__ == "__main__":
 
     if "clean_df" not in st.session_state:
         # cheking existance correct  
-        print(f"PP_recipes : {os.path.exists('../data_files/PP_recipes.csv')}")
-        print(f"RAW_recipes : {os.path.exists('../data_files/RAW_recipes.csv')}")
-        print(f"RAW_interactions : {os.path.exists('../data_files/RAW_interactions.csv')}")
+        print(f"PP_recipes : {os.path.exists('../data_files/PP_recipes.csv')} , col : {pd.read_csv('../data_files/PP_recipes.csv').columns()}")
+        print(f"RAW_recipes : {os.path.exists('../data_files/RAW_recipes.csv')} , col = {pd.read_csv('../data_files/RAW_recipes.csv').columns()}")
+        print(f"RAW_interactions : {os.path.exists('../data_files/RAW_interactions.csv')}, col = {pd.read_csv('../data_files/PP_recipes.csv').columns()}")
         
         # Executed only once per session
         DF = DataFrameLoadder(path_raw_interaction='../data_files/RAW_interactions.csv',
