@@ -105,6 +105,6 @@ if __name__ == "__main__":
         st.session_state.clean_df = df
         
     if "df_ingr_map" not in st.session_state:
-        df_ingr_map = pd.read_pickle("../data_files/ingr_map.pkl")
+        df_ingr_map = pd.read_pickle("./data_files/ingr_map.pkl")
         st.session_state.df_ingr_map = df_ingr_map
     main()
