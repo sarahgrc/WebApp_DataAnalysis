@@ -218,67 +218,61 @@ def top_commented_recipes(df, top_n=10):
 
 def get_top_tags(df, most_commented=False, top_recipes=20, top_n=10):
     """
-    Retrieve the most frequently used tags.
+    Returns the most frequently used tags either for all recipes or for the top most commented recipes.
 
-    Args:
-        df (pd.DataFrame): DataFrame containing recipe data.
-        most_commented (bool): Whether to filter by the most commented recipes.
-        top_recipes (int): Number of top recipes to consider if most_commented is True.
-        top_n (int): Number of tags to return.
+    Parameters:
+    - df (pd.DataFrame): A DataFrame containing recipe data.
+    - most_commented (bool): If True, only consider the most commented recipes.
+    - top_recipes (int): Number of most commented recipes to consider (used only if most_commented=True).
+    - top_n (int): Number of most frequent tags to return.
 
     Returns:
-        pd.Series: Top N most frequently used tags.
+    - pd.Series: The `top_n` most frequently used tags.
     """
+
     if most_commented:
-        most_commented_df = df.sort_values(by='num_comments', ascending=False).head(top_recipes)
-        filtered_df = df[df['recipe_id'].isin(most_commented_df['recipe_id'])]
+        most_commented = df.sort_values(by='num_comments', ascending=False).head(top_recipes)
+        filtered_df = df[df['recipe_id'].isin(most_commented['recipe_id'])]
     else:
         filtered_df = df
 
+    def parse_tags(tag_str):
+        if isinstance(tag_str, str):
+            tag_str = tag_str.strip('[]')
+            return [tag.strip(' "') for tag in tag_str.split(',')]
+        return []
+
+    filtered_df['tags'] = filtered_df['tags'].apply(parse_tags)
     tags_series = filtered_df['tags'].explode()
-    return tags_series.value_counts().head(top_n)
+    top_tags = tags_series.value_counts().head(top_n)
+
+    return top_tags
 
 def get_top_ingredients2(df, df_ingr_map, excluded_ingredients=None, top_n=10):
-    """
-    Find the most frequently used ingredients, excluding common ones.
-
-    Args:
-        df (pd.DataFrame): DataFrame with recipe data.
-        df_ingr_map (pd.DataFrame): DataFrame mapping ingredient IDs to their names.
-        excluded_ingredients (set, optional): Ingredients to exclude.
-        top_n (int): Number of top ingredients to return.
-
-    Returns:
-        pd.Series: Top N ingredients and their counts.
-    """
     ingr_map = df_ingr_map.set_index('id')['replaced'].to_dict()
-
-    def map_ingredient_ids(ids):
-        if pd.isna(ids):
-            return []
-        try:
-            return [ingr_map.get(int(ingr_id), 'Unknown') for ingr_id in ast.literal_eval(ids)]
-        except (ValueError, SyntaxError):
-            return []
-
-    df['mapped_ingredients'] = df['ingredient_ids'].apply(map_ingredient_ids)
-
+    def parse_ingredient_ids(ids, ingr_map):
+        if isinstance(ids, str):
+            ids = ids.strip('[]')
+            try:
+                return [ingr_map.get(int(ingr.strip()), 'Unknown') for ingr in ids.split(',') if ingr.strip()]
+            except ValueError:
+                return []
+        return []
+    df['mapped_ingredients'] = df['ingredient_ids'].apply(lambda ids: parse_ingredient_ids(ids, ingr_map))
     if excluded_ingredients is None:
         excluded_ingredients = {
             'black pepper', 'vegetable oil', 'salt', 'pepper', 'olive oil',
             'butter', 'water', 'sugar', 'flour', 'brown sugar',
         }
-
-    filtered_ingredients = (
-        df['mapped_ingredients']
+    filtered_ingredients = (df['mapped_ingredients']
         .explode()
         .loc[lambda x: ~x.isin(excluded_ingredients)]
         .value_counts()
         .head(top_n)
     )
-
-
     return filtered_ingredients
+
+
 """
 def count_recipes_season(df):
     
