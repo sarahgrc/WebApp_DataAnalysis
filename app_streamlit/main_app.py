@@ -5,21 +5,46 @@ from contributors_page import display_contributors_page
 from recipes_page import display_recipes_page
 from profile_page import display_profile_page
 from load_data.LoadData import DataFrameLoadder
+import os
+import zipfile
+import gdown
 
-# Set the page configuration
-st.set_page_config(page_title="Data Manager", page_icon=":material/edit:")
+# download all the necesary files for the project 
 
-# Initialize session state for login status and clean_df
-if "logged_in" not in st.session_state:
-    st.session_state.logged_in = False
+zip_url = 'https://drive.google.com/file/d/11KFS8Kiyivn0vvaOJwHiNo42CAduzLuV/view?usp=drive_link'
+file_id = zip_url.split('/d/')[1].split('/')[0]
+download_url = f"https://drive.google.com/uc?export=download&id={file_id}"
+folder_storage = '../data_files'
 
-if "clean_df" not in st.session_state:
-    # Executed only once per session
 
-    df = DataFrameLoadder(path_raw_interaction='./data_files/RAW_interactions.csv',
-                          path_raw_recipes='./data_files/RAW_recipes.csv',
-                          pp_recipe='./data_files/PP_recipes.csv').load()
-    st.session_state.clean_df = df
+def download_extract_zip(gdrive_url, out_dir):
+    """
+    Download a google drive Zip archive and extract it to wanted folder
+
+    Args:
+        gdrive_url (str): Google Drive url of the download zip archive.
+        out_dir (str): Path where to extract the zip files.
+    """
+    # create output path if not existing
+    if not os.path.exists(out_dir):
+        os.makedirs(out_dir)
+
+    try:
+        # Download zip file
+        local_zip_path = os.path.join(out_dir, "data.zip")
+        gdown.download(gdrive_url, local_zip_path, quiet=False)
+
+        # Extract zip file
+        with zipfile.ZipFile(local_zip_path, 'r') as zipf:
+            zipf.extractall(out_dir)
+            print(' -- Extraction terminée --')
+        
+        # Remove zip file
+        os.remove(local_zip_path)
+    except Exception as e:
+        print("*** ERREUR ***", e)
+
+
 
 
 #wrapper functions for pages
@@ -36,6 +61,7 @@ def display_contributors_page_wrapper():
 def main():
     """
     Display the main page of the web app
+    
     """
 
     clean_df = st.session_state.clean_df  # Retrieve the data from session state
@@ -65,4 +91,27 @@ def main():
         pg.run()
 
 if __name__ == "__main__":
+    
+    download_extract_zip(download_url, folder_storage)
+    
+    if "clean_df" not in st.session_state:
+    # Executed only once per session
+      df = DataFrameLoadder(path_raw_interaction='./data_files/RAW_interactions.csv',
+                            path_raw_recipes='./data_files/RAW_recipes.csv',
+                            pp_recipe='./data_files/PP_recipes.csv').load()
+      st.session_state.clean_df = df
+      
+    # Set the page configuration
+    st.set_page_config(page_title="Data Manager", page_icon=":material/edit:")
+
+    # Initialize session state for login status and clean_df
+    if "logged_in" not in st.session_state:
+        st.session_state.logged_in = False
+
+    if "clean_df" not in st.session_state:
+        # Executed only once per session
+        df = DataFrameLoadder(path_raw_interaction='../data_files/RAW_interactions.csv',
+                              path_raw_recipes='../data_files/RAW_recipes.csv',
+                              pp_recipe='../data_files/PP_recipes.csv').load()
+        st.session_state.clean_df = df
     main()
