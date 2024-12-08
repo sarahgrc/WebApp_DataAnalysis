@@ -82,7 +82,8 @@ def main():
 
 if __name__ == "__main__":
     
-    download_extract_zip(download_url, folder_storage)
+    if not os.path.exists('../data_files/RAW_interactions.csv') : 
+        download_extract_zip(download_url, folder_storage)
     
     # Set the page configuration
     st.set_page_config(page_title="Data Manager", page_icon=":material/edit:")
