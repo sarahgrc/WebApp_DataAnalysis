@@ -4,6 +4,7 @@ from load_data.preprocess.merging import dataframe_concat
 from load_data.preprocess.add_drop_column import add_columns
 from load_data.preprocess.add_drop_column import drop_columns
 from load_data.preprocess.cleaning_data import outliers_df
+from load_data.preprocess.cleaning_data import remove_outliers_iqr
 from load_data.preprocess.cleaning_data import date_separated
 from load_data.preprocess.cleaning_data import add_season
 from analyse.utils import nutri_score
@@ -67,7 +68,13 @@ def prepare_final_dataframe(raw_interaction, raw_recipes, pp_recipes):
         logging.info("Removed outliers from 'n_steps' column.")
     df_merged.reset_index(drop=True, inplace=True)
 
-    #first cleaning
+    # cleaning intermediate
+    if 'n_steps' in df_merged.columns:
+        df_merged.reset_index(drop=True, inplace=True)
+        outliers_n_steps = outliers_df(df_merged, 'n_steps', treshold_sup=20)
+        df_merged = df_merged[~df_merged['n_steps'].isin(outliers_n_steps)]
+        df_merged.reset_index(drop=True, inplace=True)
+
     if 'minutes' in df_merged.columns:
         df_merged.reset_index(drop=True, inplace=True)
         outliers_minutes = outliers_df(df_merged, 'minutes', treshold_sup=240)
@@ -101,14 +108,6 @@ def prepare_final_dataframe(raw_interaction, raw_recipes, pp_recipes):
         'Calories', 'Total Fat', 'Sugar', 'Sodium', 'Protein', 'Saturated Fat', 'Carbohydrates'
     ]
 
-    def remove_outliers_inter(df, column):
-        q1 = df[column].quantile(0.25)
-        q3 = df[column].quantile(0.75)
-        inter = q3 - q1
-        lower_bound = q1 - 1.5 * inter
-        upper_bound = q3 + 1.5 * inter
-        return df[(df[column] >= lower_bound) & (df[column] <= upper_bound)]
-
     for col in columns_to_check_outliers:
         if col in df_merged.columns:
             df_merged = remove_outliers_inter(df_merged, col)
@@ -119,5 +118,4 @@ def prepare_final_dataframe(raw_interaction, raw_recipes, pp_recipes):
     
 
     return df_merged
-
 
