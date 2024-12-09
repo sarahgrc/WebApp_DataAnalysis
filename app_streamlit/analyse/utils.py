@@ -187,43 +187,34 @@ def top_commented_recipes(df, top_n=10):
 
 def get_top_tags(df, most_commented=False, top_recipes=20, top_n=10):
     """
-    Returns the most frequently used tags either for all recipes or for the top most commented recipes.
+    Retrieve the most frequently used tags.
 
-    Parameters:
-    - df (pd.DataFrame): A DataFrame containing recipe data.
-    - most_commented (bool): If True, only consider the most commented recipes.
-    - top_recipes (int): Number of most commented recipes to consider (used only if most_commented=True).
-    - top_n (int): Number of most frequent tags to return.
+    Args:
+        df (pd.DataFrame): DataFrame containing recipe data.
+        most_commented (bool): Whether to filter by the most commented recipes.
+        top_recipes (int): Number of top recipes to consider if most_commented is True.
+        top_n (int): Number of tags to return.
 
     Returns:
-    - pd.Series: The `top_n` most frequently used tags.
+        pd.Series: Top N most frequently used tags.
     """
-
-    logging.debug("Starting the function to extract top tags.")
-
-    # Filtering the most commented recipes if 'most_commented' is True
     if most_commented:
-        logging.debug(f"Filtering top {top_recipes} most commented recipes.")
         most_commented_df = df.sort_values(by='num_comments', ascending=False).head(top_recipes)
         filtered_df = df[df['recipe_id'].isin(most_commented_df['recipe_id'])]
-        logging.debug(f"Number of recipes considered: {len(filtered_df)}.")
     else:
         filtered_df = df
-        logging.debug(f"Using all recipes, number of recipes: {len(filtered_df)}.")
 
-
-    def parse_tags(tag_str):
-        if isinstance(tag_str, str):
-            tag_str = tag_str.strip('[]')
-            return [tag.strip(' "') for tag in tag_str.split(',')]
+    # Parse 'tags' strings into lists
+    def parse_tags(value):
+        if isinstance(value, str):
+            # Remove brackets and split by commas
+            return [tag.strip(" '\"") for tag in value.strip('[]').split(',')]
         return []
 
-    filtered_df['tags'] = filtered_df['tags'].apply(parse_tags)
-    tags_series = filtered_df['tags'].explode()
-    top_tags = tags_series.value_counts().head(top_n)
-    logging.info(f"Top {top_n} tags extracted successfully.")
-    logging.debug(f"Top tags:\n{top_tags}")
-    return top_tags
+    # Apply parsing, then explode and count occurrences
+    tags_series = filtered_df['tags'].apply(parse_tags).explode()
+    return tags_series.value_counts().head(top_n)
+
 
 def get_top_ingredients2(df, df_ingr_map, excluded_ingredients=None, top_n=10):
     ingr_map = df_ingr_map.set_index('id')['replaced'].to_dict()
