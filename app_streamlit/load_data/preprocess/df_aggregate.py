@@ -10,7 +10,7 @@ logging.basicConfig(
 def df_aggregate(df):
     """
     Aggregates data to have one row per recipe_id, with the original columns (excluding 'user_id') plus:
-    - num_users_commented: Number of unique users who commented on the recipe.
+    - num_comments: Number of unique users who commented on the recipe.
     - avg_reviews_per_user: Total number of reviews for the recipe.
 
     Args:
@@ -27,7 +27,7 @@ def df_aggregate(df):
         # Aggregate metrics
         logging.info("Aggregating metrics for each recipe_id")
         aggregated_metrics = df.groupby('recipe_id').agg(
-            num_users_commented=('user_id', 'nunique'),
+            num_comments=('user_id', 'nunique'),
             avg_ratings=('rating', 'mean')
         ).reset_index()
 
