@@ -59,7 +59,7 @@ def display_profile_page(clean_df, user_id = 47892):
 
             # Calculate metrics
             nb_com_mean = user_recipes_df['num_comments'].mean()
-            rating_mean = user_recipes_df['avg_ratings'].mean()
+            rating_mean = user_recipes_df['avg_reviews'].mean()
 
             # Display metrics
             rose = (240, 135, 114)
