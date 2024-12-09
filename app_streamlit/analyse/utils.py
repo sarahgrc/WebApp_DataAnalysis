@@ -200,10 +200,6 @@ def get_top_tags(df, most_commented=False, top_recipes=20, top_n=10):
     """
 
     logging.debug("Starting the function to extract top tags.")
-    
-    if 'num_comments' not in df.columns or 'recipe_id' not in df.columns or 'tags' not in df.columns:
-        logging.error("The DataFrame is missing required columns: 'num_comments', 'recipe_id', or 'tags'.")
-        raise ValueError("The DataFrame must contain 'num_comments', 'recipe_id', and 'tags'.")
 
     # Filtering the most commented recipes if 'most_commented' is True
     if most_commented:
