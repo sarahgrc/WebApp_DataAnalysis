@@ -178,3 +178,44 @@ def sample_date_data():
         'submitted': ['2023-01-01', '2023-02-15', '2023-03-20', '2023-04-10', '2023-05-05'],
     }
     return pd.DataFrame(data)
+
+@pytest.fixture
+def visu_data():
+    """ Fixture to test the visualisation season function"""
+    data = {
+        'avg_ratings': [5, 4, 3, 2, 1, 5, 4],
+        'season': ['Winter', 'Winter', 'Spring', 'Spring', 'Summer', 'Summer', 'Autumn']
+    }
+    df = pd.DataFrame(data)
+    return df
+
+@pytest.fixture
+def df_low_count():
+    # Données factices pour les tests
+    df_low_count = pd.DataFrame({
+        'minutes_tr': ['0-10', '10-20', '20-30'],
+        'count': [10, 15, 5]
+    })
+    return df_low_count
+
+@pytest.fixture
+def df_high_count():
+    df_high_count = pd.DataFrame({
+        'minutes_tr': ['0-10', '10-20', '20-30'],
+        'count': [5, 25, 10]
+    })
+    return df_high_count
+
+@pytest.fixture
+def ingr_map():
+    return pd.read_pickle('data_files/ingr_map.pkl')
+
+@pytest.fixture
+def sample_date_avgrating():
+    """summary
+    """
+    test_data = pd.DataFrame({
+        'name': ['Recipe A', 'Recipe B', 'Recipe C', 'Recipe D', 'Recipe E', 'Recipe F'],
+        'num_comments': [10, 50, 5, 0, 30, 20],
+        'avg_ratings': [4.5, 3.8, 4.7, 4.2, 4.0, 3.5]
+    })
