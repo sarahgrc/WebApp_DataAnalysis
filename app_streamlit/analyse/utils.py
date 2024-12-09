@@ -5,8 +5,15 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
+import logging
 
 
+logging.basicConfig(
+    filename='logging/debug.log',
+    level=logging.DEBUG,
+    filemode='w',
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
 
 def metrics_main_contributor(df):
     """
@@ -18,8 +25,10 @@ def metrics_main_contributor(df):
     Returns:
         tuple: Number of unique contributors and recipes.
     """
+    logging.debug("Calculating number of unique contributors and recipes.")
     num_contributors = df['contributor_id'].nunique()
     num_recipes = df['recipe_id'].nunique()
+    logging.info(f"Number of contributors: {num_contributors}, Number of recipes: {num_recipes}")
     return num_contributors, num_recipes
 
 
@@ -35,13 +44,16 @@ def average_and_total_comments_per_contributor(df):
       where contributor_id is treated as a category.
     """
     # Vérifier que les colonnes nécessaires existent
+    logging.debug("Starting calculation of average and total comments per contributor.")
     if 'contributor_id' not in df.columns or 'num_comments' not in df.columns:
-        raise ValueError("Le DataFrame doit contenir les colonnes 'contributor_id' et 'num_comments'.")
+        logging.error("Required columns 'contributor_id' and 'num_comments' are missing.")
 
     # Convertir contributor_id en chaîne
+    logging.debug("Converting 'contributor_id' to string type.")
     df['contributor_id'] = df['contributor_id'].astype(str)
 
     # Calculer la moyenne des commentaires et le total des commentaires par contributeur
+    logging.debug("Grouping data by 'contributor_id' and calculating statistics.")
     stats = df.groupby('contributor_id')['num_comments'].agg(
         avg_comments_per_recipe='mean',  # Moyenne des commentaires
         total_comments='sum'            # Total des commentaires
@@ -52,7 +64,7 @@ def average_and_total_comments_per_contributor(df):
 
     # Trier par moyenne décroissante
     stats = stats.sort_values(by='avg_comments_per_recipe', ascending=False)
-
+    logging.info("Successfully calculated average and total comments per contributor.")
     return stats
 
 
@@ -69,10 +81,12 @@ def top_commented_recipes_by_contributors(df, top_contributors, max_recipes_per_
     - pd.DataFrame: A DataFrame containing contributor IDs, recipe IDs, names, and number of comments.
     """
     # Vérifier les colonnes nécessaires
+    logging.debug("Extracting top commented recipes by contributors.")
     if not {'contributor_id', 'recipe_id', 'name', 'num_comments'}.issubset(df.columns):
-        raise ValueError("Le DataFrame doit contenir les colonnes 'contributor_id', 'recipe_id', 'name', et 'num_comments'.")
+        logging.error("The DataFrame must contain 'contributor_id', 'recipe_id', 'name', and 'num_comments'.")
 
     # Convertir contributor_id en chaîne dans les deux DataFrames
+    logging.debug("Filtering DataFrame to include only the top contributors.")
     df['contributor_id'] = df['contributor_id'].astype(str)
     top_contributors['contributor_id'] = top_contributors['contributor_id'].astype(str)
 
@@ -80,9 +94,11 @@ def top_commented_recipes_by_contributors(df, top_contributors, max_recipes_per_
     filtered_df = df[df['contributor_id'].isin(top_contributors['contributor_id'])]
     
     # Trier les recettes par nombre de commentaires
+    logging.debug("Sorting recipes by number of comments.")
     filtered_df = filtered_df.sort_values(by='num_comments', ascending=False)
     
     # Limiter le nombre de recettes par contributeur
+    logging.debug("Limiting the number of recipes per contributor.")
     top_recipes = (
         filtered_df.groupby('contributor_id')
         .head(max_recipes_per_contributor)
@@ -90,6 +106,7 @@ def top_commented_recipes_by_contributors(df, top_contributors, max_recipes_per_
     )
     
     # Sélectionner les colonnes pertinentes
+    logging.info(f"Extracted top commented recipes for {len(top_recipes)} records.")
     return top_recipes[['contributor_id', 'recipe_id', 'name', 'num_comments']]
 
 
@@ -104,16 +121,19 @@ def count_contributors_by_recipe_range_with_bins(df):
         pd.DataFrame: DataFrame with 'contributor_id', 'avg_comments_per_recipe', and 'total_comments'.
     """
     if 'contributor_id' not in df.columns or 'num_comments' not in df.columns:
-        raise ValueError("The DataFrame must contain 'contributor_id' and 'num_comments'.")
+        logging.error("The DataFrame must contain 'contributor_id' and 'num_comments'.")
 
     df['contributor_id'] = df['contributor_id'].astype(str)
 
+    logging.debug("Calculating average and total comments per contributor.")
     stats = df.groupby('contributor_id')['num_comments'].agg(
         avg_comments_per_recipe='mean',
         total_comments='sum'
     ).reset_index()
 
+    logging.info(f"Calculated stats for {len(stats)} contributors.")
     stats = stats.sort_values(by='avg_comments_per_recipe', ascending=False)
+    logging.debug(f"Top contributors by average comments: {stats.head()}")
     return stats
 
 def count_contributors_by_recipe_range_with_bins(df):
@@ -126,9 +146,14 @@ def count_contributors_by_recipe_range_with_bins(df):
     Returns:
         pd.Series: Series with recipe range categories as index and contributor counts as values.
     """
+    if 'recipe_id' not in df.columns or 'contributor_id' not in df.columns:
+        logging.error("The required columns 'recipe_id' and 'contributor_id' are missing.")
+
     recipe_counts = df.groupby('contributor_id')['recipe_id'].nunique()
+    logging.info(f"Calculated unique recipe counts for {len(recipe_counts)} contributors.")
     bins = [0, 1, 5, 8, float('inf')]
     labels = ['1 recipe', '2-5 recipes', '6-8 recipes', '> 8 recipes']
+    logging.debug(f"Defining bins: {bins} and labels: {labels}.")
 
     binned_counts = pd.cut(recipe_counts, bins=bins, labels=labels, right=True)
     return binned_counts.value_counts().sort_index()
@@ -145,74 +170,86 @@ def top_commented_recipes(df, top_n=10):
     Returns:
         pd.DataFrame: DataFrame containing top N recipes.
     """
-    return df.sort_values(by='num_comments', ascending=False).head(top_n)[
+    logging.debug("Starting the function to extract top commented recipes.")
+    
+    if 'num_comments' not in df.columns :
+        logging.error("The DataFrame is missing required columns: 'num_comments'.")
+    
+    logging.debug(f"Sorting the DataFrame by 'num_comments' to find top {top_n} recipes.")
+    top_recipes = df.sort_values(by='num_comments', ascending=False).head(top_n)[
         ['contributor_id', 'recipe_id', 'num_comments', 'name']
     ]
+    
+    logging.info(f"Top {top_n} recipes extracted successfully.")
+    logging.debug(f"Top recipes:\n{top_recipes}")
+
+    return top_recipes
 
 def get_top_tags(df, most_commented=False, top_recipes=20, top_n=10):
     """
-    Returns the most frequently used tags either for all recipes or for the top most commented recipes.
+    Retrieve the most frequently used tags.
 
-    Parameters:
-    - df (pd.DataFrame): A DataFrame containing recipe data.
-    - most_commented (bool): If True, only consider the most commented recipes.
-    - top_recipes (int): Number of most commented recipes to consider (used only if most_commented=True).
-    - top_n (int): Number of most frequent tags to return.
+    Args:
+        df (pd.DataFrame): DataFrame containing recipe data.
+        most_commented (bool): Whether to filter by the most commented recipes.
+        top_recipes (int): Number of top recipes to consider if most_commented is True.
+        top_n (int): Number of tags to return.
 
     Returns:
-    - pd.Series: The `top_n` most frequently used tags.
+        pd.Series: Top N most frequently used tags.
     """
-
     if most_commented:
-        most_commented = df.sort_values(by='num_comments', ascending=False).head(top_recipes)
-        filtered_df = df[df['recipe_id'].isin(most_commented['recipe_id'])]
+        most_commented_df = df.sort_values(by='num_comments', ascending=False).head(top_recipes)
+        filtered_df = df[df['recipe_id'].isin(most_commented_df['recipe_id'])]
     else:
         filtered_df = df
 
-    def parse_tags(tag_str):
-        if isinstance(tag_str, str):
-            tag_str = tag_str.strip('[]')
-            return [tag.strip(' "') for tag in tag_str.split(',')]
+    # Parse 'tags' strings into lists
+    def parse_tags(value):
+        if isinstance(value, str):
+            # Remove brackets and split by commas
+            return [tag.strip(" '\"") for tag in value.strip('[]').split(',')]
         return []
 
-    filtered_df['tags'] = filtered_df['tags'].apply(parse_tags)
-    tags_series = filtered_df['tags'].explode()
-    top_tags = tags_series.value_counts().head(top_n)
+    # Apply parsing, then explode and count occurrences
+    tags_series = filtered_df['tags'].apply(parse_tags).explode()
+    return tags_series.value_counts().head(top_n)
 
-    return top_tags
 
 def get_top_ingredients2(df, df_ingr_map, excluded_ingredients=None, top_n=10):
     ingr_map = df_ingr_map.set_index('id')['replaced'].to_dict()
+
     def parse_ingredient_ids(ids, ingr_map):
         if isinstance(ids, str):
             ids = ids.strip('[]')
             try:
+                logging.debug(f"Parsing ingredient IDs: {ids}")
                 return [ingr_map.get(int(ingr.strip()), 'Unknown') for ingr in ids.split(',') if ingr.strip()]
             except ValueError:
+                logging.error(f"ValueError while parsing ingredient IDs: {ids}")
                 return []
         return []
+    
     df['mapped_ingredients'] = df['ingredient_ids'].apply(lambda ids: parse_ingredient_ids(ids, ingr_map))
     if excluded_ingredients is None:
         excluded_ingredients = {
             'black pepper', 'vegetable oil', 'salt', 'pepper', 'olive oil',
             'butter', 'water', 'sugar', 'flour', 'brown sugar',
         }
+        logging.debug(f"Using default excluded ingredients: {excluded_ingredients}")
+
     filtered_ingredients = (df['mapped_ingredients']
         .explode()
         .loc[lambda x: ~x.isin(excluded_ingredients)]
         .value_counts()
         .head(top_n)
     )
+    
+    logging.info(f"Top {top_n} ingredients extracted successfully.")
+    logging.debug(f"Top ingredients:\n{filtered_ingredients}")
     return filtered_ingredients
 
 
-"""
-def count_recipes_season(df):
-    
-    Count recipes per season.
-
-    return filtered_ingredient_counts
-"""
 def trendy_ingredients_by_seasons(df,ingr_map,top_n):
     """
     This function create a dataframe for each seasons and returns the top 200 ingredients used
@@ -225,18 +262,20 @@ def trendy_ingredients_by_seasons(df,ingr_map,top_n):
     Returns:
         winter_ingr,spring_ingr,summer_ingr,autumn_ingr (pd.series) : four pd.series with the top 200 ingredients used
     """
+    logging.debug(f"Starting trendy_ingredients_by_seasons with top_n={top_n}")
     # Create dataFrames for each season
     winter= df[df['season']=='winter']
     spring=df[df['season']=='spring']
     summer=df[df['season']=='summer']
     autumn=df[df['season']=='autumn']
+    logging.info("Dataframes for each season created successfully.")
 
     # Get the top 200 ingredients for each season
     winter_ingr=get_top_ingredients2(winter, ingr_map, excluded_ingredients=None, top_n=top_n)
     spring_ingr=get_top_ingredients2(spring, ingr_map, excluded_ingredients=None, top_n=top_n)
     summer_ingr=get_top_ingredients2(summer, ingr_map, excluded_ingredients=None, top_n=top_n)
     autumn_ingr=get_top_ingredients2(autumn, ingr_map, excluded_ingredients=None, top_n=top_n)
-
+    logging.info(f"Top {top_n} ingredients extracted for each season.")
     return winter_ingr,spring_ingr,summer_ingr,autumn_ingr
 
 def unique_ingr(df,ingr_map,top_n=200):
@@ -264,16 +303,24 @@ def unique_ingr(df,ingr_map,top_n=200):
     for i in winter_ingr.index:
         if i not in spring_ingr.index and i not in summer_ingr.index and i not in autumn_ingr.index : 
             winter_unique.append(i)
+    logging.debug(f"Winter unique ingredients: {len(winter_unique)}")
+
     for i in spring_ingr.index:
         if i not in winter_ingr.index and i not in summer_ingr.index and i not in autumn_ingr.index : 
             spring_unique.append(i)
+    logging.debug(f"Spring unique ingredients: {len(spring_unique)}")
+
     for i in summer_ingr.index:
         if i not in winter_ingr.index and i not in spring_ingr.index and i not in autumn_ingr.index : 
             summer_unique.append(i)
+    logging.debug(f"Summer unique ingredients: {len(summer_unique)}")
+
     for i in autumn_ingr.index:
         if i not in winter_ingr.index and i not in summer_ingr.index and i not in spring_ingr.index : 
             autumn_unique.append(i)
+    logging.debug(f"Autumn unique ingredients: {len(autumn_unique)}")
 
+    logging.info(f"Unique ingredients identified for each season: Winter={len(winter_unique)}, Spring={len(spring_unique)}, Summer={len(summer_unique)}, Autumn={len(autumn_unique)}")
     # Return unique indices for each season as a list
     return winter_unique,spring_unique,summer_unique,autumn_unique
   
@@ -284,7 +331,7 @@ def count_recipes_season(df):
                          'spring': len(df[df['season'] == 'spring']),
                          'summer': len(df[df['season'] == 'summer']),
                          'autumn': len(df[df['season'] == 'autumn'])}
-
+    logging.debug(f"Recipe count per season: {recipe_per_season}")
     return recipe_per_season
 
 def user_recipes(merged_df, user_id):
@@ -299,6 +346,7 @@ def user_recipes(merged_df, user_id):
     """
 
     recipes_user_df = merged_df.loc[merged_df["contributor_id"] == user_id]
+    logging.debug(f"Number of recipes found for user_id {user_id}: {len(recipes_user_df)}")
     return recipes_user_df 
 
 
@@ -384,7 +432,7 @@ def calculate_positive_points_nutri_score(row):
     elif row["Protein"] <= 6.4: protein_points = 3
     elif row["Protein"] <= 8: protein_points = 4
     else: protein_points = 5
-
+    logging.debug(f"Calculated positive points based on Protein value {row['Protein']}: {protein_points}")
     return protein_points
 
 def nutri_score(df):
@@ -402,19 +450,25 @@ def nutri_score(df):
     """
     negative_points = calculate_negative_points_nutri_score(df)
     positive_points = calculate_positive_points_nutri_score(df)
+    logging.debug(f"Negative points: {negative_points}, Positive points: {positive_points}")
     score = negative_points - positive_points
-
+    logging.debug(f"Nutri-Score calculated score: {score}")
     # Conversion Nutri-Score
     if score <= -1:
-        return "A"
+        grade = "A"
     elif 0 <= score <= 2:
-        return "B"
+        grade = "B"
     elif 3 <= score <= 10:
-        return "C"
+        grade = "C"
     elif 11 <= score <= 18:
-        return "D"
+        grade = "D"
     else:
-        return "E"
+        grade = "E"
+
+    # Log the final grade
+    logging.debug(f"Nutri-Score grade: {grade}")
+
+    return grade
     
 def top_recipes_user(df):
     """
@@ -424,7 +478,7 @@ def top_recipes_user(df):
         df : pandas.DataFrame
             DataFrame with these columns:
             - 'name': recipe names.
-            - 'avg_ratings': average rating.
+            - 'avg_reviews': average rating.
             - 'num_comments': number of comments.
 
     Returns:
@@ -436,15 +490,15 @@ def top_recipes_user(df):
     """
     # Filtrer les recettes valides
     filtered_df = df[df['name'].notna()]
-
+    logging.debug(f"Filtered data (recipes with valid names):\n{filtered_df.head()}")
     # Sélectionner les colonnes nécessaires et trier
-    top_user_recipe = filtered_df[['name', 'num_comments', 'avg_ratings']].sort_values(
-        by=['num_comments', 'avg_ratings'], ascending=[False, False]
+    top_user_recipe = filtered_df[['name', 'num_comments', 'avg_reviews']].sort_values(
+        by=['num_comments', 'avg_reviews'], ascending=[False, False]
     ).head(5)
-
+    logging.debug(f"Top 5 recipes based on comments and ratings:\n{top_user_recipe}")
     # Renommer les colonnes pour une meilleure lisibilité
     top_user_recipe = top_user_recipe.rename(
-        columns={'name': 'Recipe', 'num_comments': 'Number of comments', 'avg_ratings': 'Average Rating'}
+        columns={'name': 'Recipe', 'num_comments': 'Number of comments', 'avg_reviews': 'Average Rating'}
     )
 
     return top_user_recipe
@@ -456,27 +510,30 @@ def top_recipes(df):
     Returns the top 5 recipes with the most comments.
 
     Args:
-        df : pandas.DataFrame
-            DataFrame with all the preprocessed data
+        df pd.DataFrame : DataFrame with all the preprocessed data
 
     Returns:
-        pandas.DataFrame
+        pd.DataFrame
     """
+
+    logging.debug("Starting to find the top 5 recipes with the most comments.")
+    logging.debug(f"Initial DataFrame:\n{df.head()}")
+
     filtered_df = df[df['name'].notna()]
     assert filtered_df['name'].isna().sum() == 0, "Filtered DataFrame still contains NaN in 'name'"
-    
+    logging.debug(f"Filtered DataFrame (no NaN in 'name'):\n{filtered_df.head()}")
     # Top 5 commented recipes
-    top_recipe_df = filtered_df[['name', 'num_comments', 'avg_ratings']].sort_values(
+    top_recipe_df = filtered_df[['name', 'num_comments', 'avg_reviews']].sort_values(
         by='num_comments', ascending=False
     ).head(5)
+    logging.debug(f"Top 5 recipes based on number of comments:\n{top_recipe_df}")
     top_recipe_df = top_recipe_df.rename(
-        columns={'name': 'Recipe', 'num_comments': 'Number of comments', 'avg_ratings': 'Avg Rating'}
+        columns={'name': 'Recipe', 'num_comments': 'Number of comments', 'avg_reviews': 'Avg reviews'}
     )
-
+    logging.debug(f"Top 5 recipes with renamed columns:\n{top_recipe_df}")
     return top_recipe_df
 
 
-# FIXME =============== up to data preprocess ?
 def cat_minutes(df):
     """
     Transform columns minutes in categorical values
@@ -505,7 +562,7 @@ def best_recipe_filter_time(df, time_r, nb_show):
     Get information about the best recipes (ranking-higher comments) filtered on time of preparation
 
     args:
-        df : pd.DataFrame : dataframe containing columns 'minutes','name', 'n_steps', 'num_comments', 'ingredients','avg_ratingss'
+        df : pd.DataFrame : dataframe containing columns 'minutes','name', 'n_steps', 'num_comments', 'ingredients','avg_reviews'
         time_r : str : time of preparation (categorie) we want to filter results on 
         nb_show : int : number of recipes to show
 
@@ -513,19 +570,27 @@ def best_recipe_filter_time(df, time_r, nb_show):
         result : pd.DataFrame : recipes info that have the best ranking + higher comment filtered on time_r
 
     """
+    logging.debug("Starting best_recipe_filter_time function.")
+    logging.debug(f"Received time_r: {time_r}, nb_show: {nb_show}")
+
     list_cat_time = ['less_15min', '15_30min',
                      '30min_1h', '1h_2h', '2h_3h', '3h_4h', '4h_more']
     
     if time_r not in list_cat_time or not nb_show in [1, 2, 3, 4, 5, 10]:
-        raise ValueError(f' ** ERROR ** time_r should be in {list_cat_time} -got : {
-                         time_r} and  nb_show in [1, 2, 3, 4, 5, 10] - got : {nb_show} ')
+        error_msg = f"** ERROR ** time_r should be in {list_cat_time} - got: {time_r}, and nb_show in [1, 2, 3, 4, 5, 10] - got: {nb_show}"
+        logging.error(error_msg)
+    
     if 'minutes_tr' not in df.columns : 
+        logging.debug("Creating 'minutes_tr' column using 'cat_minutes'.")
         df['minutes_tr'] = cat_minutes(df)
+
     df = df[df['minutes_tr'] == time_r]
 
-    result = df[df['avg_ratings'] == 5][['name', 'n_steps', 'num_comments', 'ingredients','avg_ratings']]
+    result = df[df['avg_reviews'] == 5][['name', 'n_steps', 'num_comments', 'ingredients','avg_reviews']]
+    logging.debug(f"Filtered recipes with perfect ratings (5): {len(result)} records.")
     result = result.sort_values(by='num_comments', ascending=False).head(nb_show)
-    
+    logging.debug(f"Sorted and selected top {nb_show} recipes with highest comments.")
+    logging.debug(f"Returning result with {len(result)} records.")
     return result
 
 def get_insight_low_ranking(df):
@@ -540,11 +605,16 @@ def get_insight_low_ranking(df):
         df_high_count : (pd.DataFrame) filter on high ranking
 
     """
+    logging.debug(f"Initial DataFrame shape: {df.shape}")
+
     if 'minutes_tr' not in df.columns : 
+        logging.debug("Creating 'minutes_tr' column using 'cat_minutes'.")
         df['minutes_tr'] = cat_minutes(df)
 
     # filter low ranking - insight on time preparation
-    df_low_rating = df[df['avg_ratings'].isin([1, 2])]
+    df_low_rating = df[df['avg_reviews'].isin([1, 2])]
+    logging.debug(f"Filtered low-ranking recipes: {len(df_low_rating)} records.")
+
     df_low_count = df_low_rating.groupby(
         ['minutes_tr']).size().reset_index(name='count')
     l_low = np.sum(df_low_count['count'])
@@ -554,18 +624,19 @@ def get_insight_low_ranking(df):
     df_high_count = df.groupby(['minutes_tr']).size().reset_index(name='count')    
     l_all = np.sum(df_high_count['count'])
     df_high_count['count'] = np.round(df_high_count['count']*100/l_all, 2)
+    logging.debug("Returning df_low_count and df_high_count.")
     return df_low_count, df_high_count
-
-
 
 
 def visualise_recipe_season(df):
     """Visualise count per season with low and high rankings."""
     
     # Filter for high and low rankings
-    df_high = df[df['avg_ratings'].isin([4, 5])]
-    df_low = df[df['avg_ratings'].isin([1, 2, 3])]
-    
+    df_high = df[df['avg_reviews'].isin([4, 5])]
+    df_low = df[df['avg_reviews'].isin([1, 2, 3])]
+    logging.debug(f"Number of high-ranking recipes: {len(df_high)}")
+    logging.debug(f"Number of low-ranking recipes: {len(df_low)}")
+
     # Count recipes per season
     count_data_high = df_high.groupby(['season']).size().reset_index(name='count')
     count_data_low = df_low.groupby(['season']).size().reset_index(name='count')
@@ -578,7 +649,8 @@ def visualise_recipe_season(df):
     ax.set_ylabel('Count')
     ax.set_title('Recipes count per season', weight='bold')
     ax.legend()
-
+    
+    logging.debug("Plot created successfully.")
     return fig
 
 

@@ -1,58 +1,71 @@
 import pandas as pd 
+import logging
+
+logging.basicConfig(filename='logging/debug.log', level=logging.DEBUG, filemode="w", format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+
 
 def add_columns(df_target, df_source, key_target, key_source, columns_to_add):
     """
-    Ajoute des colonnes spécifiées d'un DataFrame source à un DataFrame cible en utilisant des clés spécifiées,
-    sans inclure la colonne clé du DataFrame source dans le DataFrame final et en évitant les colonnes indésirables.
+    Adds specified columns from a source DataFrame to a target DataFrame using specified keys,
+    without including the key column from the source DataFrame in the final DataFrame and avoiding unwanted columns.
 
     Args:
-        df_target (pd.DataFrame): DataFrame cible où les colonnes seront ajoutées.
-        df_source (pd.DataFrame): DataFrame source contenant les colonnes à ajouter.
-        key_target (str): Nom de la colonne clé dans le DataFrame cible.
-        key_source (str): Nom de la colonne clé dans le DataFrame source.
-        columns_to_add (list): Liste des colonnes à ajouter depuis le DataFrame source.
+    df_target (pd.DataFrame): Target DataFrame where the columns will be added.
+    df_source (pd.DataFrame): Source DataFrame containing the columns to be added.
+    key_target (str): Name of the key column in the target DataFrame.
+    key_source (str): Name of the key column in the source DataFrame.
+    columns_to_add (list): List of columns to add from the source DataFrame.
 
     Returns:
-        pd.DataFrame: Le DataFrame cible avec les nouvelles colonnes ajoutées.
+    pd.DataFrame: The target DataFrame with the new columns added.
     """
-    import pandas as pd
 
-    # Vérification des colonnes clés
-    if key_target not in df_target.columns:
-        raise KeyError(f"La clé '{key_target}' n'est pas présente dans le DataFrame cible.")
-    if key_source not in df_source.columns:
-        raise KeyError(f"La clé '{key_source}' n'est pas présente dans le DataFrame source.")
+    try : 
+        logging.info("Starting add_columns function.")
+    # Checking key columns
+        if key_target not in df_target.columns:
+            error_message = f"The key '{key_target}' is not in the output dataframe."
+            logging.error(error_message)
+        if key_source not in df_source.columns:
+            error_message = f"The key '{key_target}' is not in the intput dataframe."
+            logging.error(error_message)
 
-    # Vérification des colonnes à ajouter
-    missing_cols = [col for col in columns_to_add if col not in df_source.columns]
-    if missing_cols:
-        raise KeyError(f"Les colonnes suivantes sont manquantes dans le DataFrame source : {missing_cols}")
+        # Checking the columns to add
+        missing_cols = [col for col in columns_to_add if col not in df_source.columns]
+        if missing_cols:
+            error_message = f"The following columns are missing in the source DataFrame : {missing_cols}"
+            logging.error(error_message)
 
-    # Sélectionner uniquement les colonnes nécessaires du DataFrame source
-    df_source_reduced = df_source[[key_source] + columns_to_add].copy()
+        # Select only the necessary columns from the source DataFrame
+        df_source_reduced = df_source[[key_source] + columns_to_add].copy()
 
-    # Supprimer la colonne 'id' du DataFrame cible si elle n'est pas la clé de jointure
-    if key_source in df_target.columns and key_source != key_target:
-        df_target = df_target.drop(columns=[key_source])
+        # Remove the 'id' column from the target DataFrame if it is not the join key
+        if key_source in df_target.columns and key_source != key_target:
+            df_target = df_target.drop(columns=[key_source])
 
-    # Effectuer la fusion sans créer de colonnes 'id_x' ou 'id_y'
-    df_result = pd.merge(
-        df_target,
-        df_source_reduced,
-        left_on=key_target,
-        right_on=key_source,
-        how='left'
-    )
+        # Perform the merge without creating 'id_x' or 'id_y' columns
+        df_result = pd.merge(
+            df_target,
+            df_source_reduced,
+            left_on=key_target,
+            right_on=key_source,
+            how='left'
+        )
 
-    # Supprimer la colonne clé du DataFrame source après la fusion uniquement si elle est différente de key_target
-    if key_source != key_target:
-        df_result = df_result.drop(columns=[key_source])
+        # Remove key column from source DataFrame after merge only if it is different from key_target. 
+        if key_source != key_target:
+            df_result = df_result.drop(columns=[key_source])
+        
+        logging.info("add_columns function completed successfully.")
+        return df_result
 
-    return df_result
+    except Exception as e:
+        logging.exception("An error occurred in add_columns.")
+        raise
 
 def drop_columns(df, columns_to_drop):
     """
-    Function that drops columns
+    Function that drops columns.
 
     Args:
         df : dataframe
@@ -61,13 +74,26 @@ def drop_columns(df, columns_to_drop):
     Returns:
         df: new dataframe without the columns that weren't needed
     """
-    # Vérifications de base
-    if not isinstance(df, pd.DataFrame) :
-        raise ValueError("Must be a dataframe")
+    try:
+        logging.info("Starting drop_columns function.")
 
-    columns_to_drop= columns_to_drop if isinstance(columns_to_drop, list) else [columns_to_drop]
+        if not isinstance(df, pd.DataFrame):
+            error_message = "The input must be a DataFrame."
+            logging.error(error_message)
+            raise ValueError(error_message)
 
-    for i in columns_to_drop:
-        df=df.drop(i,axis=1)
+        columns_to_drop = columns_to_drop if isinstance(columns_to_drop, list) else [columns_to_drop]
 
-    return df
+        for col in columns_to_drop:
+            if col not in df.columns:
+                logging.warning(f"Column '{col}' not found in the DataFrame. Skipping.")
+                continue
+            logging.info(f"Dropping column: {col}")
+            df = df.drop(col, axis=1)
+
+        logging.info("drop_columns function completed successfully.")
+        return df
+
+    except Exception as e:
+        logging.exception("An error occurred in drop_columns.")
+        raise
