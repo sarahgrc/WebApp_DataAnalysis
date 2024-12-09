@@ -42,9 +42,7 @@ if __name__ == "__main__":
     # Initialize session state for clean_df
     if "clean_df" not in st.session_state:
         # Executed only once per session
-        DF = DataFrameLoadder(path_raw_interaction='./data_files/RAW_interactions.csv',
-                              path_raw_recipes='./data_files/RAW_recipes.csv',
-                              pp_recipe='./data_files/PP_recipes.csv')
+        DF = DataFrameLoadder(path_raw_interaction='./data_files/df_preprocess.csv')
         df = DF.load()
         st.session_state.clean_df = df
 
