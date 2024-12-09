@@ -52,7 +52,7 @@ def prepare_final_dataframe(raw_interaction, raw_recipes, pp_recipes):
     )
 
     df_merged.reset_index(drop=True, inplace=True)
-    df_merged=df_merged.head(150000) #not enough ram for less 
+    df_merged=df_merged.head(50000) #not enough ram for less 
     logging.info("Added 'ingredient_ids' and 'ingredient_tokens' columns from pp_recipes.")
 
     # step 3 : seperate date and submitted and delete column
