@@ -118,6 +118,7 @@ def prepare_final_dataframe(raw_interaction, raw_recipes, pp_recipes):
 
 
     logging.info("Final dataframe prepared successfully.")
+    df_merged=df_merged.head(100)
 
     return df_merged
 
