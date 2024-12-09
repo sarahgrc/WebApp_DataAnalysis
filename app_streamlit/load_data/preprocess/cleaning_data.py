@@ -122,3 +122,12 @@ def add_season(df):
     except Exception as e:
         logging.error(f"Error in add_season: {e}")
         raise
+
+def remove_outliers_iqr(df, column):
+    q1 = df[column].quantile(0.25)
+    q3 = df[column].quantile(0.75)
+    inter = q3 - q1
+    lower_bound = q1 - 1.5 * inter
+    upper_bound = q3 + 1.5 * inter
+    return df[(df[column] >= lower_bound) & (df[column] <= upper_bound)]
+
