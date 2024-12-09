@@ -12,7 +12,7 @@ import pandas as pd
 
 class DataFrameLoadder():
     # FIXME : --> add upload csv files
-    def __init__(self,  path_raw_interaction: str, path_raw_recipes: str, pp_recipe: str):
+    def __init__(self,  path_raw_interaction: str):
         """
         Dataset Loadder
 
@@ -28,8 +28,6 @@ class DataFrameLoadder():
 
         """
         self.path_raw_interaction = path_raw_interaction
-        self.path_raw_recipes = path_raw_recipes
-        self.path_pp_recipe = pp_recipe
 
     def __getitem__(self, df_name: str):
         if not isinstance(df_name, str):
@@ -43,15 +41,8 @@ class DataFrameLoadder():
             return pd.read_csv(self.df_name)
 
     def load(self):
-        try:
-            self.raw_interaction = pd.read_csv(self.path_raw_interaction)
-            self.raw_recipes = pd.read_csv(self.path_raw_recipes)
-            self.pp_recipe = pd.read_csv(self.path_pp_recipe)
-            self.df = prepare_final_dataframe(
-                self.raw_interaction, self.raw_recipes, self.pp_recipe)
-        except FileNotFoundError:
-            print('--- FILE NOT FOUND --- check csv creation ')
-        except Exception as e:
-            print(' -- UNEXPECTED ERROR --- : ', e)
+        
+        self.raw_interaction = pd.read_csv(self.path_raw_interaction)
+        self.df = self.raw_interaction
 
         return self.df
