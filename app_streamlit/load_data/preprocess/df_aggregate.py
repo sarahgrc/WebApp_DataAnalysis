@@ -27,7 +27,7 @@ def df_aggregate(df):
         # Aggregate metrics
         logging.info("Aggregating metrics for each recipe_id")
         aggregated_metrics = df.groupby('recipe_id').agg(
-            num_users_commented=('user_id', 'nunique'),
+            num_commented=('user_id', 'nunique'),
             avg_ratings=('rating', 'mean')
         ).reset_index()
 
