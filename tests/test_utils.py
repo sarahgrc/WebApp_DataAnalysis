@@ -2,6 +2,7 @@ import pytest
 import pandas as pd
 from app_streamlit.analyse.utils import * 
 from unittest.mock import patch
+from app_streamlit.analyse.utils import nutri_score
 
 def test_metrics_main_contributor(sample_raw_recipes):
     """
@@ -207,3 +208,75 @@ def test_top_recipes_top_three(sample_date_avgrating):
     # Check that the output contains exactly 3 recipes sorted by the number of comments
     assert len(result) == 3, "The result should contain exactly 3 recipes."
     pd.testing.assert_frame_equal(result.reset_index(drop=True), expected_data)
+
+def test_assign_grade():
+    # Test case for score <= -1
+    assert nutri_score(-1) == "A"
+    assert nutri_score(-2) == "A"
+    assert nutri_score(-1000) == "A"
+
+    # Test case for 0 <= score <= 2
+    assert nutri_score(0) == "B"
+    assert nutri_score(1) == "B"
+    assert nutri_score(2) == "B"
+
+    # Test case for 3 <= score <= 10
+    assert nutri_score(3) == "C"
+    assert nutri_score(5) == "C"
+    assert nutri_score(10) == "C"
+
+    # Test case for 11 <= score <= 18
+    assert nutri_score(11) == "D"
+    assert nutri_score(15) == "D"
+    assert nutri_score(18) == "D"
+
+    # Test case for score > 18
+    assert nutri_score(19) == "E"
+    assert nutri_score(25) == "E"
+    assert nutri_score(1000) == "E"
+
+    # Test case for floating point values
+    assert nutri_score(1.5) == "B"
+    assert nutri_score(7.5) == "C"
+    assert nutri_score(16.2) == "D"
+    assert nutri_score(20.7) == "E"
+
+def test_visualise_recipe_season(sample_data):
+        
+    # Call the function with the sample data
+    fig = visualise_recipe_season(sample_data)
+    
+    # Check that the plot is created (it should return a figure object)
+    assert isinstance(fig, plt.Figure), "Returned object is not a matplotlib figure"
+    
+    # Check that the legend labels exist on the plot
+    ax = fig.axes[0]  # Get the Axes object from the figure
+    legend_labels = [text.get_text() for text in ax.get_legend().get_texts()]
+    assert 'Low ranking' in legend_labels, "Low ranking label missing in legend"
+    assert 'High ranking' in legend_labels, "High ranking label missing in legend"
+    
+    # Check that the correct bars are plotted
+    # There should be 2 bars for each season, one for low-ranking and one for high-ranking
+    assert len(ax.patches) == 6, "The number of bars in the plot is incorrect"
+    
+    # Check if the bars are color-coded correctly (low = blue, high = orange)
+    low_bars = [patch for patch in ax.patches if patch.get_facecolor() == sns.color_palette("Blues")[0]]
+    high_bars = [patch for patch in ax.patches if patch.get_facecolor() == sns.color_palette("Oranges")[1]]
+    
+    assert len(low_bars) == 3, "Incorrect number of low-ranking bars"
+    assert len(high_bars) == 3, "Incorrect number of high-ranking bars"
+
+def test_group_by_season_and_count(sample_data):
+    """Test if the grouping by season and count calculation works correctly."""
+    df_high = sample_data[sample_data['avg_ratings'].isin([4, 5])]
+    df_low = sample_data[sample_data['avg_ratings'].isin([1, 2, 3])]
+
+    count_data_high = df_high.groupby(['season']).size().reset_index(name='count')
+    count_data_low = df_low.groupby(['season']).size().reset_index(name='count')
+
+    # Verify correct groupings and counts
+    assert count_data_high.loc[count_data_high['season'] == 'Summer', 'count'].iloc[0] == 2, "High-ranking count for Summer is incorrect"
+    assert count_data_high.loc[count_data_high['season'] == 'Winter', 'count'].iloc[0] == 1, "High-ranking count for Winter is incorrect"
+    assert count_data_low.loc[count_data_low['season'] == 'Winter', 'count'].iloc[0] == 1, "Low-ranking count for Winter is incorrect"
+    assert count_data_low.loc[count_data_low['season'] == 'Fall', 'count'].iloc[0] == 2, "Low-ranking count for Fall is incorrect"
+
