@@ -34,6 +34,7 @@ This project uses the following Python libraries and frameworks:
 
 ## Setup
 To launch the application, visit: [lets-cook.streamlit.app](https://lets-cook.streamlit.app)
+If you meet some difficulties lauching the application, try to reboot it. 
 
 ## Authors
 - Candice Bouquin-Renoux
