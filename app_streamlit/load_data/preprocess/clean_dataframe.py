@@ -52,6 +52,7 @@ def prepare_final_dataframe(raw_interaction, raw_recipes, pp_recipes):
     )
 
     df_merged.reset_index(drop=True, inplace=True)
+    df_merged=df_merged.head(100)
     logging.info("Added 'ingredient_ids' and 'ingredient_tokens' columns from pp_recipes.")
 
     # step 3 : seperate date and submitted and delete column
@@ -64,9 +65,6 @@ def prepare_final_dataframe(raw_interaction, raw_recipes, pp_recipes):
         df_merged = date_separated('submitted', df_merged)
         df_merged = drop_columns(df_merged, ['day', 'submitted'])
         logging.info("Removed outliers from 'n_steps' column.")
-    
-
-
     df_merged.reset_index(drop=True, inplace=True)
 
     #first cleaning
@@ -118,7 +116,7 @@ def prepare_final_dataframe(raw_interaction, raw_recipes, pp_recipes):
 
 
     logging.info("Final dataframe prepared successfully.")
-    df_merged=df_merged.head(100)
+    
 
     return df_merged
 
