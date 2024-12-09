@@ -478,7 +478,7 @@ def top_recipes_user(df):
         df : pandas.DataFrame
             DataFrame with these columns:
             - 'name': recipe names.
-            - 'avg_ratings': average rating.
+            - 'avg_reviews': average rating.
             - 'num_comments': number of comments.
 
     Returns:
@@ -492,13 +492,13 @@ def top_recipes_user(df):
     filtered_df = df[df['name'].notna()]
     logging.debug(f"Filtered data (recipes with valid names):\n{filtered_df.head()}")
     # Sélectionner les colonnes nécessaires et trier
-    top_user_recipe = filtered_df[['name', 'num_comments', 'avg_ratings']].sort_values(
-        by=['num_comments', 'avg_ratings'], ascending=[False, False]
+    top_user_recipe = filtered_df[['name', 'num_comments', 'avg_reviews']].sort_values(
+        by=['num_comments', 'avg_reviews'], ascending=[False, False]
     ).head(5)
     logging.debug(f"Top 5 recipes based on comments and ratings:\n{top_user_recipe}")
     # Renommer les colonnes pour une meilleure lisibilité
     top_user_recipe = top_user_recipe.rename(
-        columns={'name': 'Recipe', 'num_comments': 'Number of comments', 'avg_ratings': 'Average Rating'}
+        columns={'name': 'Recipe', 'num_comments': 'Number of comments', 'avg_reviews': 'Average Rating'}
     )
 
     return top_user_recipe
@@ -523,12 +523,12 @@ def top_recipes(df):
     assert filtered_df['name'].isna().sum() == 0, "Filtered DataFrame still contains NaN in 'name'"
     logging.debug(f"Filtered DataFrame (no NaN in 'name'):\n{filtered_df.head()}")
     # Top 5 commented recipes
-    top_recipe_df = filtered_df[['name', 'num_comments', 'avg_ratings']].sort_values(
+    top_recipe_df = filtered_df[['name', 'num_comments', 'avg_reviews']].sort_values(
         by='num_comments', ascending=False
     ).head(5)
     logging.debug(f"Top 5 recipes based on number of comments:\n{top_recipe_df}")
     top_recipe_df = top_recipe_df.rename(
-        columns={'name': 'Recipe', 'num_comments': 'Number of comments', 'avg_ratings': 'Avg Rating'}
+        columns={'name': 'Recipe', 'num_comments': 'Number of comments', 'avg_reviews': 'Avg reviews'}
     )
     logging.debug(f"Top 5 recipes with renamed columns:\n{top_recipe_df}")
     return top_recipe_df
@@ -562,7 +562,7 @@ def best_recipe_filter_time(df, time_r, nb_show):
     Get information about the best recipes (ranking-higher comments) filtered on time of preparation
 
     args:
-        df : pd.DataFrame : dataframe containing columns 'minutes','name', 'n_steps', 'num_comments', 'ingredients','avg_ratingss'
+        df : pd.DataFrame : dataframe containing columns 'minutes','name', 'n_steps', 'num_comments', 'ingredients','avg_reviews'
         time_r : str : time of preparation (categorie) we want to filter results on 
         nb_show : int : number of recipes to show
 
@@ -586,7 +586,7 @@ def best_recipe_filter_time(df, time_r, nb_show):
 
     df = df[df['minutes_tr'] == time_r]
 
-    result = df[df['avg_ratings'] == 5][['name', 'n_steps', 'num_comments', 'ingredients','avg_ratings']]
+    result = df[df['avg_reviews'] == 5][['name', 'n_steps', 'num_comments', 'ingredients','avg_reviews']]
     logging.debug(f"Filtered recipes with perfect ratings (5): {len(result)} records.")
     result = result.sort_values(by='num_comments', ascending=False).head(nb_show)
     logging.debug(f"Sorted and selected top {nb_show} recipes with highest comments.")
@@ -612,7 +612,7 @@ def get_insight_low_ranking(df):
         df['minutes_tr'] = cat_minutes(df)
 
     # filter low ranking - insight on time preparation
-    df_low_rating = df[df['avg_ratings'].isin([1, 2])]
+    df_low_rating = df[df['avg_reviews'].isin([1, 2])]
     logging.debug(f"Filtered low-ranking recipes: {len(df_low_rating)} records.")
 
     df_low_count = df_low_rating.groupby(
@@ -632,8 +632,8 @@ def visualise_recipe_season(df):
     """Visualise count per season with low and high rankings."""
     
     # Filter for high and low rankings
-    df_high = df[df['avg_ratings'].isin([4, 5])]
-    df_low = df[df['avg_ratings'].isin([1, 2, 3])]
+    df_high = df[df['avg_reviews'].isin([4, 5])]
+    df_low = df[df['avg_reviews'].isin([1, 2, 3])]
     logging.debug(f"Number of high-ranking recipes: {len(df_high)}")
     logging.debug(f"Number of low-ranking recipes: {len(df_low)}")
 
