@@ -141,7 +141,7 @@ def display_recipes_page(clean_df, df_ingr_map):
     clean_df,
     x="nutri_score_numeric", 
     y="num_comments",   
-    size="avg_ratings",     
+    size="avg_reviews",     
     color="nutri_score",    
     color_discrete_map=nutri_score_colors,  
     title="Relation entre Nutri-Score et Nombre de Commentaires",
