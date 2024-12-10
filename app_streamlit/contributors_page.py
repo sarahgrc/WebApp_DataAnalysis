@@ -9,7 +9,7 @@ import os
 
 from wordcloud import WordCloud
 
-from .analyse.utils import (
+from analyse.utils import (
     count_contributors_by_recipe_range_with_bins,
     get_top_tags,
     get_top_ingredients2,
