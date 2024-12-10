@@ -1,8 +1,8 @@
 import streamlit as st 
 import pandas as pd 
-from .analyse.utils import user_recipes
-from .analyse.utils import top_recipes_user
-from .analyse.utils import top_recipes
+from analyse.utils import user_recipes
+from analyse.utils import top_recipes_user
+from analyse.utils import top_recipes
 
 # Source fonction my_metric : https://py.cafe/maartenbreddels/streamlit-custom-metrics
 def my_metric(label, value, bg_color, icon="fas fa-asterisk"):
@@ -28,13 +28,9 @@ def my_metric(label, value, bg_color, icon="fas fa-asterisk"):
 def display_profile_page(clean_df, user_id = 47892):
     """
     Display the profile page content.
-    
     Args:
-        clean_df (pd.DataFrame): DataFrame containing recipe data.
-        user_id (int, optional): The ID of the user. Default is 47892.
-
-    Returns:
-        None
+        clean_df : pandas.DataFrame
+            DataFrame containing recipe data.
     """ 
 
     clean_df = st.session_state.clean_df 
