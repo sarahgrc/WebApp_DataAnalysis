@@ -18,6 +18,7 @@ You'll also learn how you can attract more people to your publications!
 
 ## Documentation
 To see the documentation of the project : 
+let's click in the following link : https://sarahgrc.github.io/WebApp_DataAnalysis/
 
 ## Technologies
 This project uses the following Python libraries and frameworks:
