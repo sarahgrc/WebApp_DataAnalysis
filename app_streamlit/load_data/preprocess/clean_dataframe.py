@@ -1,13 +1,13 @@
 import pandas as pd
-from ..preprocess.df_aggregate import df_aggregate
-from ..preprocess.merging import dataframe_concat
-from ..preprocess.add_drop_column import add_columns
-from ..preprocess.add_drop_column import drop_columns
-from ..preprocess.cleaning_data import outliers_df
-from ..preprocess.cleaning_data import remove_outliers_iqr
-from ..preprocess.cleaning_data import date_separated
-from ..preprocess.cleaning_data import add_season
-from ...analyse.utils import nutri_score
+from load_data.preprocess.df_aggregate import df_aggregate
+from load_data.preprocess.merging import dataframe_concat
+from load_data.preprocess.add_drop_column import add_columns
+from load_data.preprocess.add_drop_column import drop_columns
+from load_data.preprocess.cleaning_data import outliers_df
+from load_data.preprocess.cleaning_data import remove_outliers_iqr
+from load_data.preprocess.cleaning_data import date_separated
+from load_data.preprocess.cleaning_data import add_season
+from analyse.utils import nutri_score
 import logging 
 
 logging.basicConfig(
