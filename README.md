@@ -17,7 +17,7 @@ Here, you will discover:
 You'll also learn how you can attract more people to your publications!
 
 ## Documentation
-To see the documentation of the project click on the following link : https://sarahgrc.github.io/WebApp_DataAnalysis/
+To see the documentation of the project click on the following link : https://9e364664.docmantationmantemain.pages.dev/app_streamlit
 
 ## Technologies
 This project uses the following Python libraries and frameworks:
