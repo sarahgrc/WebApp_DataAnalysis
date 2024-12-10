@@ -1,11 +1,10 @@
 import streamlit as st
 import pandas as pd
-from .menu_page import display_menu_page
-from .contributors_page import display_contributors_page
-from .recipes_page import display_recipes_page
-from .profile_page import display_profile_page
-from .load_data import LoadData
-from .load_data.LoadData import DataFrameLoadder
+from menu_page import display_menu_page
+from contributors_page import display_contributors_page
+from recipes_page import display_recipes_page
+from profile_page import display_profile_page
+from load_data.LoadData import DataFrameLoadder
 import os
 import zipfile
 import gdown
