@@ -110,7 +110,7 @@ def prepare_final_dataframe(raw_interaction, raw_recipes, pp_recipes):
 
     for col in columns_to_check_outliers:
         if col in df_merged.columns:
-            df_merged = remove_outliers_inter(df_merged, col)
+            df_merged = remove_outliers_iqr(df_merged, col)
     logging.info("Removed outliers from 'nutrition' columns.")
 
 
