@@ -16,6 +16,9 @@ Here, you will discover:
 
 You'll also learn how you can attract more people to your publications!
 
+## Documentation
+To see the documentation of the project : 
+
 ## Technologies
 This project uses the following Python libraries and frameworks:
 - `matplotlib==3.9.3`
