@@ -3,14 +3,14 @@ import pandas as pd
 import os
 import seaborn as sns
 import matplotlib.pyplot as plt
-from .load_data.LoadData import DataFrameLoadder
-from .analyse.utils import unique_ingr, cat_minutes, get_insight_low_ranking, best_recipe_filter_time, visualise_recipe_season, visualise_low_rank_insight
+from load_data.LoadData import DataFrameLoadder
+from analyse.utils import unique_ingr, cat_minutes, get_insight_low_ranking, best_recipe_filter_time, visualise_recipe_season, visualise_low_rank_insight
 from wordcloud import WordCloud
 import random
-from .analyse.utils import top_recipes
+from analyse.utils import top_recipes
 import numpy as np
 import plotly.express as px
-from .analyse.utils import top_recipes_user
+from analyse.utils import top_recipes_user
 
 #df_ingr_map=pd.read_pickle('../data_files/ingr_map.pkl')
 
