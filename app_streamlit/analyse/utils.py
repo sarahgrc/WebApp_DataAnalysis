@@ -6,10 +6,20 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 import logging
+import os
 
+# Remonter au dossier racine du projet (web_data_)
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+
+# Construire le chemin vers le dossier logging
+log_dir = os.path.join(BASE_DIR, 'logging')
+os.makedirs(log_dir, exist_ok=True)  # Crée le dossier s'il n'existe pas
+
+# Chemin complet vers le fichier debug.log
+log_file = os.path.join(log_dir, 'debug.log')
 
 logging.basicConfig(
-    filename='logging/debug.log',
+    filename=log_file,
     level=logging.DEBUG,
     filemode='w',
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'

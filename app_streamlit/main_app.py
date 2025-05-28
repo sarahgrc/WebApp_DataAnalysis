@@ -42,12 +42,12 @@ if __name__ == "__main__":
     # Initialize session state for clean_df
     if "clean_df" not in st.session_state:
         # Executed only once per session
-        DF = DataFrameLoadder(path_raw_interaction='./data_files/df_preprocess.csv')
+        DF = DataFrameLoadder(path_raw_interaction='../data_files/df_preprocess.csv')
         df = DF.load()
         st.session_state.clean_df = df
 
     if "df_ingr_map" not in st.session_state:
-        df_ingr_map = pd.read_pickle("./data_files/ingr_map.pkl")
+        df_ingr_map = pd.read_pickle("../data_files/ingr_map.pkl")
         st.session_state.df_ingr_map = df_ingr_map
 
     main()
