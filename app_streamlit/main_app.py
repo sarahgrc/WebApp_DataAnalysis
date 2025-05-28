@@ -40,14 +40,17 @@ if __name__ == "__main__":
     st.set_page_config(page_title="Data Manager", page_icon=":material/edit:")
 
     # Initialize session state for clean_df
+    BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    data_path = os.path.join(BASE_DIR, "data_files", "df_preprocess.csv")
     if "clean_df" not in st.session_state:
         # Executed only once per session
-        DF = DataFrameLoadder(path_raw_interaction='../data_files/df_preprocess.csv')
+        DF = DataFrameLoadder(path_raw_interaction=data_path)
         df = DF.load()
         st.session_state.clean_df = df
 
     if "df_ingr_map" not in st.session_state:
-        df_ingr_map = pd.read_pickle("../data_files/ingr_map.pkl")
+        map_path = os.path.join(BASE_DIR, "data_files", "ingr_map.pkl")
+        df_ingr_map = pd.read_pickle(map_path)
         st.session_state.df_ingr_map = df_ingr_map
 
     main()
