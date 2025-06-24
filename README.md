@@ -32,7 +32,7 @@ This project uses the following Python libraries and frameworks:
 - `seaborn==0.13.2`
 - `streamlit==1.40.2`
 - `wordcloud==1.9.4`
-- `requests==2.32.3`
+- `requests==2.32.4`
 - `flake8==6.1.0`
 
 ## Setup
